@@ -42,7 +42,7 @@ export function GymMap({
     };
   }, []);
 
-  // Automatically sync OpenStreetMap tile style with light/dark theme
+  // Automatically sync minimalist Light Gray / Dark Gray canvas tiles with theme
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -51,15 +51,29 @@ export function GymMap({
       map.removeLayer(tileLayerRef.current);
     }
 
-    const layer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-      className: theme === 'dark' ? 'dark-osm-tiles' : '',
-    });
+    const baseService =
+      theme === 'dark' ? 'Canvas/World_Dark_Gray_Base' : 'Canvas/World_Light_Gray_Base';
+    const refService =
+      theme === 'dark' ? 'Canvas/World_Dark_Gray_Reference' : 'Canvas/World_Light_Gray_Reference';
 
-    layer.addTo(map);
-    tileLayerRef.current = layer;
+    const baseLayer = L.tileLayer(
+      `https://server.arcgisonline.com/ArcGIS/rest/services/${baseService}/MapServer/tile/{z}/{y}/{x}`,
+      {
+        attribution: 'Tiles &copy; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+        maxZoom: 16,
+      }
+    );
+
+    const labelLayer = L.tileLayer(
+      `https://server.arcgisonline.com/ArcGIS/rest/services/${refService}/MapServer/tile/{z}/{y}/{x}`,
+      {
+        maxZoom: 16,
+        pane: 'tilePane',
+      }
+    );
+
+    const group = L.layerGroup([baseLayer, labelLayer]).addTo(map);
+    tileLayerRef.current = group;
   }, [theme]);
 
   // Fit bounds when filter changes
