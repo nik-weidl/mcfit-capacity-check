@@ -15,29 +15,97 @@
 <body>
   <header class="top-header">
     <div class="container header-inner">
-      <div class="brand">
-        <span class="brand-badge">McFIT</span>
-        <h1>Capacity Check</h1>
-      </div>
+      <h1>McFIT Capacity</h1>
       <div class="header-actions">
         <button id="locate-me-btn" class="btn-secondary" title="Find nearest studio">
-          &#x1F4CD; Near Me
+          Near Me
         </button>
         <button id="refresh-btn" class="btn-secondary" title="Refresh live data">
-          &#x21bb; Refresh
+          Refresh
         </button>
       </div>
     </div>
   </header>
 
   <main class="container main-content">
+    <!-- MAIN FEATURE: Hero Studio Capacity, "In X Hours" Predictor & Large 24h Forecast Graph -->
+    <section class="card hero-forecast-card">
+      <div class="hero-top-bar">
+        <div>
+          <h2 id="active-studio-name" class="hero-studio-title">Loading&hellip;</h2>
+          <p id="active-studio-address" class="studio-address">&mdash;</p>
+        </div>
+        <div class="day-selector" id="day-selector">
+          <button class="day-btn active" data-day="today">Today</button>
+          <button class="day-btn" data-day="1">Mon</button>
+          <button class="day-btn" data-day="2">Tue</button>
+          <button class="day-btn" data-day="3">Wed</button>
+          <button class="day-btn" data-day="4">Thu</button>
+          <button class="day-btn" data-day="5">Fri</button>
+          <button class="day-btn" data-day="6">Sat</button>
+          <button class="day-btn" data-day="0">Sun</button>
+        </div>
+      </div>
+
+      <!-- Large Hero Readouts: Live Now + In X Hours Prediction + Best/Peak Times -->
+      <div class="hero-stats-strip">
+        <div class="hero-stat-block">
+          <span class="hero-stat-label">NOW (<span id="live-hour-label">--:00</span>)</span>
+          <div class="hero-stat-main">
+            <span id="live-percentage" class="hero-stat-value">--%</span>
+          </div>
+          <span id="live-vs-typical" class="hero-stat-sub">&mdash;</span>
+        </div>
+
+        <div class="hero-stat-block forecast-block">
+          <div class="forecast-header-row">
+            <span class="hero-stat-label">IN X HOURS (<span id="predicted-time-label">--:00</span>)</span>
+            <div class="horizon-pills" id="horizon-pills">
+              <button class="horizon-pill" data-hours="1">+1h</button>
+              <button class="horizon-pill active" data-hours="2">+2h</button>
+              <button class="horizon-pill" data-hours="3">+3h</button>
+              <button class="horizon-pill" data-hours="4">+4h</button>
+              <button class="horizon-pill" data-hours="6">+6h</button>
+            </div>
+          </div>
+          <div class="hero-stat-main">
+            <span id="predicted-percentage" class="hero-stat-value forecast-accent">--%</span>
+          </div>
+          <span id="predicted-explanation" class="hero-stat-sub">&mdash;</span>
+        </div>
+
+        <div class="hero-stat-block windows-block">
+          <div class="window-stat">
+            <span class="hero-stat-label">BEST TIME TODAY</span>
+            <strong id="best-window-text" class="window-val good-text">--:00</strong>
+          </div>
+          <div class="window-stat">
+            <span class="hero-stat-label">PEAK RUSH</span>
+            <strong id="peak-window-text" class="window-val warn-text">--:00</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Enlarged 24-Hour Interactive Bar Chart -->
+      <div class="chart-section">
+        <div class="chart-subbar">
+          <h3 id="chart-title">Today</h3>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="swatch swatch-low"></span> &lt;45%</span>
+            <span class="legend-item"><span class="swatch swatch-normal"></span> 45&ndash;74%</span>
+            <span class="legend-item"><span class="swatch swatch-high"></span> &ge;75%</span>
+            <span class="legend-item"><span class="swatch swatch-forecast"></span> Forecast</span>
+            <span class="legend-item"><span class="swatch-dot"></span> Typical</span>
+          </div>
+        </div>
+        <div id="hourly-chart" class="hourly-chart" aria-label="Hourly capacity chart"></div>
+      </div>
+    </section>
+
     <!-- Interactive Map + Studio Finder -->
     <section class="card finder-card">
       <div class="picker-top-row">
         <div class="filter-controls">
-          <button class="city-tab" id="fav-filter-btn" data-city="Favorites">
-            &#9733; Favorites <span id="fav-count">(0)</span>
-          </button>
           <select id="city-select" class="city-select" aria-label="Select city">
             <option value="All">All Cities</option>
           </select>
@@ -69,104 +137,7 @@
       </div>
     </section>
 
-    <!-- Selected Studio Header -->
-    <section class="selected-studio-banner">
-      <div class="selected-studio-info">
-        <div class="selected-title-row">
-          <h2 id="active-studio-name">Loading&hellip;</h2>
-          <button id="fav-toggle-btn" class="fav-btn" title="Pin studio">&#9734; Pin</button>
-          <button id="center-map-btn" class="fav-btn" title="Center on map">&#x1F5FA; Map</button>
-        </div>
-        <p id="active-studio-address" class="studio-address">&mdash;</p>
-      </div>
-      <div class="data-source-meta">
-        <span id="last-updated-text" class="meta-subtext"></span>
-      </div>
-    </section>
-
-    <!-- Top KPI Row -->
-    <section class="kpi-grid">
-      <!-- 1. Now -->
-      <div class="card kpi-card">
-        <div class="kpi-header">
-          <span class="kpi-label">NOW</span>
-          <span id="live-level-badge" class="level-badge">&mdash;</span>
-        </div>
-        <div class="kpi-main">
-          <span id="live-percentage" class="kpi-value">--%</span>
-          <span id="live-hour-label" class="kpi-sublabel">--:00</span>
-        </div>
-        <div id="live-vs-typical" class="kpi-footer">&mdash;</div>
-      </div>
-
-      <!-- 2. Forecast -->
-      <div class="card kpi-card predictor-card">
-        <div class="kpi-header">
-          <span class="kpi-label">FORECAST</span>
-          <div class="horizon-pills" id="horizon-pills">
-            <button class="horizon-pill" data-hours="1">+1h</button>
-            <button class="horizon-pill active" data-hours="2">+2h</button>
-            <button class="horizon-pill" data-hours="3">+3h</button>
-            <button class="horizon-pill" data-hours="4">+4h</button>
-            <button class="horizon-pill" data-hours="6">+6h</button>
-          </div>
-        </div>
-        <div class="kpi-main">
-          <span id="predicted-percentage" class="kpi-value">--%</span>
-          <div class="predicted-meta">
-            <span id="predicted-time-label" class="kpi-sublabel">--:00</span>
-            <span id="predicted-trend-badge" class="trend-badge">&mdash;</span>
-          </div>
-        </div>
-        <div id="predicted-explanation" class="kpi-footer">&mdash;</div>
-      </div>
-
-      <!-- 3. Best Window & Peak -->
-      <div class="card kpi-card">
-        <div class="kpi-header">
-          <span class="kpi-label">TODAY&rsquo;S WINDOWS</span>
-        </div>
-        <div class="planner-rows">
-          <div class="planner-item">
-            <span class="planner-tag good">Best</span>
-            <strong id="best-window-text">--:00 &ndash; --:00</strong>
-          </div>
-          <div class="planner-item">
-            <span class="planner-tag warn">Peak</span>
-            <strong id="peak-window-text">--:00 &ndash; --:00</strong>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Hourly Chart -->
-    <section class="card chart-card">
-      <div class="chart-header">
-        <h3 id="chart-title">Hourly Capacity</h3>
-        <div class="day-selector" id="day-selector">
-          <button class="day-btn active" data-day="today">Today</button>
-          <button class="day-btn" data-day="1">Mon</button>
-          <button class="day-btn" data-day="2">Tue</button>
-          <button class="day-btn" data-day="3">Wed</button>
-          <button class="day-btn" data-day="4">Thu</button>
-          <button class="day-btn" data-day="5">Fri</button>
-          <button class="day-btn" data-day="6">Sat</button>
-          <button class="day-btn" data-day="0">Sun</button>
-        </div>
-      </div>
-
-      <div class="chart-legend">
-        <span class="legend-item"><span class="swatch swatch-low"></span> &lt;45%</span>
-        <span class="legend-item"><span class="swatch swatch-normal"></span> 45&ndash;74%</span>
-        <span class="legend-item"><span class="swatch swatch-high"></span> &ge;75%</span>
-        <span class="legend-item"><span class="swatch swatch-forecast"></span> Forecast</span>
-        <span class="legend-item"><span class="swatch-dot"></span> Typical</span>
-      </div>
-
-      <div id="hourly-chart" class="hourly-chart" aria-label="Hourly capacity chart"></div>
-    </section>
-
-    <!-- Weekly Heatmap -->
+    <!-- Weekly Overview Heatmap -->
     <section class="card heatmap-card">
       <div class="heatmap-header">
         <h3>Weekly Overview</h3>

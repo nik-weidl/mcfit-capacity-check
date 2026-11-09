@@ -1,11 +1,7 @@
 /**
  * McFIT Germany Studio Capacity Map & Smart Forecast App
  * - Tracks all 175 active German McFIT studios across 106 cities
- * - Interactive Leaflet map with live color-coded capacity pins & "Near Me" GPS finder
- * - Fetches live real-time hourly utilization directly from Magicline's CORS-enabled endpoint:
- *   https://rsg-group.api.magicline.com/connect/v1/studio/{studioId}/utilization
- * - Predicts capacity "In X Hours" and across all 7 weekdays (Mon-Sun) by combining
- *   collected historical snapshots (`data/history.json`) with a studio-calibrated weekday model.
+ * - Enlarged Hero Forecast & 24h Capacity Graph + Keyless OpenStreetMap Finder
  */
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -24,12 +20,11 @@ const BASE_WEEKDAY_PROFILES = {
 const state = {
   studios: [],
   history: { studios: {} },
-  liveCache: {}, // studioId -> { items, currentHour, currentPct, fetchedAt }
+  liveCache: {},
   selectedCityTab: 'All',
   searchQuery: '',
   sortBy: 'city',
-  selectedStudioId: localStorage.getItem('mcfit_selected_studio') || '1858374200', // Default: McFIT München-Schwabing
-  favorites: new Set(JSON.parse(localStorage.getItem('mcfit_favorites') || '["1858374200"]')),
+  selectedStudioId: localStorage.getItem('mcfit_selected_studio') || '1858374200',
   horizonHours: 2,
   selectedDayTab: 'today',
   map: null,
@@ -41,17 +36,10 @@ function formatStudioName(name) {
   return (name || '').replace(/^KLUB\s+/i, '').replace(/^McFIT\s+/i, '').trim();
 }
 
-function saveFavorites() {
-  localStorage.setItem('mcfit_favorites', JSON.stringify([...state.favorites]));
-  const favCountEl = document.getElementById('fav-count');
-  if (favCountEl) favCountEl.textContent = `(${state.favorites.size})`;
-}
-
 function getLevelInfo(pct) {
   if (pct < 45) {
     return {
-      label: 'LOW',
-      cls: 'level-low',
+      pctCls: 'pct-low',
       barCls: 'bar-low',
       hmCls: 'hm-low',
       pinCls: 'pin-low',
@@ -59,16 +47,14 @@ function getLevelInfo(pct) {
   }
   if (pct < 75) {
     return {
-      label: 'NORMAL',
-      cls: 'level-normal',
+      pctCls: 'pct-normal',
       barCls: 'bar-normal',
       hmCls: 'hm-normal',
       pinCls: 'pin-normal',
     };
   }
   return {
-    label: 'HIGH',
-    cls: 'level-high',
+    pctCls: 'pct-high',
     barCls: 'bar-high',
     hmCls: 'hm-high',
     pinCls: 'pin-high',
@@ -262,10 +248,7 @@ async function fetchLiveStudioUtilization(studioId) {
 function getFilteredStudios() {
   const q = state.searchQuery.trim().toLowerCase();
   const list = state.studios.filter((s) => {
-    if (state.selectedCityTab === 'Favorites' && !state.favorites.has(s.id)) {
-      return false;
-    }
-    if (state.selectedCityTab !== 'All' && state.selectedCityTab !== 'Favorites') {
+    if (state.selectedCityTab !== 'All') {
       if (s.city !== state.selectedCityTab) return false;
     }
     if (q) {
@@ -335,7 +318,6 @@ function getStudioCurrentPct(studioId) {
       if (typeof snap[h] === 'number') return snap[h];
     }
   }
-  // Fallback to most recent recorded date in history.json
   const daysObj = state.history.studios?.[studioId]?.days;
   if (daysObj) {
     const keys = Object.keys(daysObj).sort();
@@ -349,14 +331,10 @@ function getStudioCurrentPct(studioId) {
   return null;
 }
 
-/**
- * Initialize Leaflet Map with official keyless OpenStreetMap tiles
- * Uses a CSS filter (`dark-osm-tiles`) on the tile layer for dark mode so NO external commercial API key is ever needed.
- */
 function initMap() {
   if (!window.L) return;
   const map = window.L.map('gym-map', {
-    center: [51.1657, 10.4515], // Center of Germany
+    center: [51.1657, 10.4515],
     zoom: 6,
     zoomControl: true,
   });
@@ -394,9 +372,6 @@ function initMap() {
   });
 }
 
-/**
- * Renders interactive capacity pins on the Leaflet map
- */
 function renderMapMarkers({ fitBounds = false } = {}) {
   if (!state.map || !state.markersLayer) return;
   state.markersLayer.clearLayers();
@@ -455,8 +430,8 @@ function renderMapMarkers({ fitBounds = false } = {}) {
         <div class="popup-title">${formatStudioName(s.name)}</div>
         <div class="popup-addr">${s.street}, ${s.zipCode} ${s.city}</div>
         <div class="popup-metrics">
-          <span class="level-badge ${lvl.cls}">${pct !== null ? `${pct}%` : '--%'}</span>
-          <span style="color: var(--forecast-blue); font-weight: 700;">+2h: ~${in2hPct}%</span>
+          <span class="${lvl.pctCls}">${pct !== null ? `${pct}%` : '--%'}</span>
+          <span style="color: var(--forecast-blue);">+2h: ~${in2hPct}%</span>
         </div>
       </div>
     `);
@@ -523,12 +498,11 @@ function renderStudioGrid() {
   grid.innerHTML = filtered
     .map((s) => {
       const pct = getStudioCurrentPct(s.id);
-      const isFav = state.favorites.has(s.id);
       const activeCls = s.id === state.selectedStudioId ? 'active' : '';
-      let badgeHtml = `<span class="chip-badge" style="color:var(--text-muted)">--%</span>`;
+      let pctHtml = `<span class="chip-pct" style="color:var(--text-muted)">--%</span>`;
       if (typeof pct === 'number') {
         const lvl = getLevelInfo(pct);
-        badgeHtml = `<span class="chip-badge ${lvl.cls}">${pct}%</span>`;
+        pctHtml = `<span class="chip-pct ${lvl.pctCls}">${pct}%</span>`;
       }
       const shortName = formatStudioName(s.name);
       const subText = shortName.toLowerCase().includes(s.city.toLowerCase())
@@ -537,10 +511,10 @@ function renderStudioGrid() {
       return `
         <button class="studio-chip ${activeCls}" data-studio-id="${s.id}">
           <div class="chip-info">
-            <div class="chip-name">${isFav ? '&#9733; ' : ''}${shortName}</div>
+            <div class="chip-name">${shortName}</div>
             <div class="chip-sub">${subText}</div>
           </div>
-          ${badgeHtml}
+          ${pctHtml}
         </button>
       `;
     })
@@ -563,26 +537,15 @@ function renderDashboard() {
   document.getElementById('active-studio-address').textContent =
     `${studio.street}, ${studio.zipCode} ${studio.city}`;
 
-  const favBtn = document.getElementById('fav-toggle-btn');
-  const isFav = state.favorites.has(studio.id);
-  favBtn.innerHTML = isFav ? '&#9733; Pinned' : '&#9734; Pin';
-  favBtn.classList.toggle('is-fav', isFav);
-
-  const liveInfo = state.liveCache[studio.id];
-  document.getElementById('last-updated-text').textContent = liveInfo?.fetchedAt
-    ? `Updated ${liveInfo.fetchedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-    : '';
-
   const todayModel = buildTodaySeriesAndPredictions(studio.id);
   const currentSlot = todayModel.hours[todayModel.activeHour] || todayModel.hours[0];
   const currentLvl = getLevelInfo(currentSlot.percentage);
 
-  // 1. Live KPI Card
-  const liveBadge = document.getElementById('live-level-badge');
-  liveBadge.textContent = currentLvl.label;
-  liveBadge.className = `level-badge ${currentLvl.cls}`;
+  // 1. Live Now Readout
+  const liveValEl = document.getElementById('live-percentage');
+  liveValEl.textContent = `${currentSlot.percentage}%`;
+  liveValEl.className = `hero-stat-value ${currentLvl.pctCls}`;
 
-  document.getElementById('live-percentage').textContent = `${currentSlot.percentage}%`;
   const nextH = (currentSlot.hour + 1) % 24;
   document.getElementById('live-hour-label').textContent =
     `${String(currentSlot.hour).padStart(2, '0')}:00–${String(nextH).padStart(2, '0')}:00`;
@@ -595,7 +558,7 @@ function renderDashboard() {
       ? `Typical ${dayName}: ${currentSlot.typical}%`
       : `${diffSign} vs. typical ${dayName} (${currentSlot.typical}%)`;
 
-  // 2. Forecast Card
+  // 2. Forecast Readout
   const targetHour = (todayModel.activeHour + state.horizonHours) % 24;
   const isTomorrow = todayModel.activeHour + state.horizonHours >= 24;
   const targetDow = isTomorrow ? (todayModel.dayOfWeek + 1) % 7 : todayModel.dayOfWeek;
@@ -612,26 +575,17 @@ function renderDashboard() {
 
   document.getElementById('predicted-percentage').textContent = `${predictedPct}%`;
   document.getElementById('predicted-time-label').textContent =
-    `${String(targetHour).padStart(2, '0')}:00${isTomorrow ? ' (+1d)' : ''}`;
+    `${String(targetHour).padStart(2, '0')}:00${isTomorrow ? ' +1d' : ''}`;
 
   const deltaFromNow = predictedPct - currentSlot.percentage;
-  const trendBadge = document.getElementById('predicted-trend-badge');
-  if (deltaFromNow >= 6) {
-    trendBadge.textContent = `↗ +${deltaFromNow}%`;
-    trendBadge.style.color = 'var(--high)';
-  } else if (deltaFromNow <= -6) {
-    trendBadge.textContent = `↘ ${deltaFromNow}%`;
-    trendBadge.style.color = 'var(--low)';
-  } else {
-    trendBadge.textContent = `→ ${deltaFromNow >= 0 ? '+' : ''}${deltaFromNow}%`;
-    trendBadge.style.color = 'var(--normal)';
-  }
-
-  const typicalAtTarget = isTomorrow ? tomorrowCurve[targetHour] : todayModel.typicalCurve[targetHour];
+  const deltaStr = `${deltaFromNow >= 0 ? '+' : ''}${deltaFromNow}% vs. now`;
+  const typicalAtTarget = isTomorrow
+    ? tomorrowCurve[targetHour]
+    : todayModel.typicalCurve[targetHour];
   document.getElementById('predicted-explanation').textContent =
-    `Typical ${SHORT_DAYS[targetDow]} ${String(targetHour).padStart(2, '0')}:00: ${typicalAtTarget}%`;
+    `${deltaStr} · Typical ${SHORT_DAYS[targetDow]}: ${typicalAtTarget}%`;
 
-  // 3. Today's Windows Card
+  // 3. Today's Best & Peak Windows
   const workoutHours = todayModel.hours.filter(
     (h) => h.hour >= Math.max(6, todayModel.activeHour) && h.hour <= 22
   );
@@ -769,14 +723,9 @@ function renderWeeklyHeatmap(studio, todayModel) {
 
 function setCityFilter(cityVal) {
   state.selectedCityTab = cityVal;
-  document.querySelectorAll('.city-tab').forEach((t) => {
-    t.classList.toggle('active', t.getAttribute('data-city') === cityVal);
-  });
   const select = document.getElementById('city-select');
   if (select && [...select.options].some((o) => o.value === cityVal)) {
     select.value = cityVal;
-  } else if (select && cityVal === 'Favorites') {
-    select.value = 'All';
   }
   renderStudioGrid();
   renderMapMarkers({ fitBounds: true });
@@ -784,7 +733,6 @@ function setCityFilter(cityVal) {
 }
 
 function bindEvents() {
-  // Studio sort selector
   const sortSelect = document.getElementById('studio-sort');
   if (sortSelect) {
     sortSelect.addEventListener('change', (e) => {
@@ -792,16 +740,7 @@ function bindEvents() {
       renderStudioGrid();
     });
   }
-  // Favorites filter toggle
-  const favFilterBtn = document.getElementById('fav-filter-btn');
-  if (favFilterBtn) {
-    favFilterBtn.addEventListener('click', () => {
-      const next = state.selectedCityTab === 'Favorites' ? 'All' : 'Favorites';
-      setCityFilter(next);
-    });
-  }
 
-  // Full 106-city dropdown
   const citySelect = document.getElementById('city-select');
   if (citySelect) {
     citySelect.addEventListener('change', (e) => {
@@ -809,7 +748,6 @@ function bindEvents() {
     });
   }
 
-  // Search box
   const searchInput = document.getElementById('studio-search');
   searchInput.addEventListener('input', (e) => {
     state.searchQuery = e.target.value;
@@ -817,32 +755,6 @@ function bindEvents() {
     renderMapMarkers({ fitBounds: true });
   });
 
-  // Favorite button
-  document.getElementById('fav-toggle-btn').addEventListener('click', () => {
-    const id = state.selectedStudioId;
-    if (state.favorites.has(id)) {
-      state.favorites.delete(id);
-    } else {
-      state.favorites.add(id);
-    }
-    saveFavorites();
-    renderStudioGrid();
-    renderDashboard();
-  });
-
-  // Center on map button
-  document.getElementById('center-map-btn').addEventListener('click', () => {
-    const studio = state.studios.find((s) => s.id === state.selectedStudioId);
-    if (studio && state.map && typeof studio.lat === 'number') {
-      state.map.setView([studio.lat, studio.lng], 14, { animate: true });
-      if (state.markerById[studio.id]) {
-        state.markerById[studio.id].openPopup();
-      }
-      document.getElementById('gym-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  });
-
-  // "Near Me" GPS Locator
   document.getElementById('locate-me-btn').addEventListener('click', () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser.');
@@ -864,9 +776,6 @@ function bindEvents() {
         }
         if (nearest) {
           state.selectedCityTab = 'All';
-          document.querySelectorAll('.city-tab').forEach((t) => {
-            t.classList.toggle('active', t.getAttribute('data-city') === 'All');
-          });
           selectStudio(nearest.id, { panMap: true });
         }
       },
@@ -876,7 +785,6 @@ function bindEvents() {
     );
   });
 
-  // Horizon pills (+1h, +2h, +3h, +4h, +6h)
   document.querySelectorAll('.horizon-pill').forEach((pill) => {
     pill.addEventListener('click', () => {
       state.horizonHours = parseInt(pill.getAttribute('data-hours'), 10);
@@ -886,7 +794,6 @@ function bindEvents() {
     });
   });
 
-  // Day selector tabs
   document.querySelectorAll('.day-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.selectedDayTab = btn.getAttribute('data-day');
@@ -896,7 +803,6 @@ function bindEvents() {
     });
   });
 
-  // Manual live refresh
   document.getElementById('refresh-btn').addEventListener('click', async () => {
     await fetchLiveStudioUtilization(state.selectedStudioId);
     renderStudioGrid();
@@ -906,7 +812,6 @@ function bindEvents() {
 }
 
 async function init() {
-  saveFavorites();
   initMap();
   bindEvents();
 
