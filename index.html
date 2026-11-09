@@ -10,6 +10,15 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap"
     rel="stylesheet"
   />
+  <script>
+    (function () {
+      var saved = localStorage.getItem('mcfit_theme_override');
+      var isDark = saved
+        ? saved === 'dark'
+        : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.classList.toggle('dark', isDark);
+    })();
+  </script>
 </head>
 <body class="min-h-screen bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
   <div id="root"></div>

@@ -130,9 +130,14 @@ function buildSmoothVerticalCurvePath(values, width = 300, height = 1800) {
 }
 
 export default function App() {
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem('mcfit_theme') || 'light'
-  );
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('mcfit_theme_override');
+    if (saved === 'light' || saved === 'dark') return saved;
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
+  });
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true
   );
@@ -158,9 +163,34 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const colorMq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = (e) => {
+      const nextSystemTheme = e.matches ? 'dark' : 'light';
+      localStorage.removeItem('mcfit_theme_override');
+      setTheme(nextSystemTheme);
+    };
+    colorMq.addEventListener('change', handleSystemThemeChange);
+    return () => colorMq.removeEventListener('change', handleSystemThemeChange);
+  }, []);
+
+  useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
-    localStorage.setItem('mcfit_theme', theme);
   }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => {
+      const next = prev === 'light' ? 'dark' : 'light';
+      const systemTheme = window.matchMedia?.('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+      if (next === systemTheme) {
+        localStorage.removeItem('mcfit_theme_override');
+      } else {
+        localStorage.setItem('mcfit_theme_override', next);
+      }
+      return next;
+    });
+  };
 
   const fetchLiveStudio = useCallback(async (studioId) => {
     try {
@@ -396,7 +426,7 @@ export default function App() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
+              onClick={handleToggleTheme}
               title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               aria-label="Toggle theme"
             >
