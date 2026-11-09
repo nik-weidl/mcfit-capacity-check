@@ -5,7 +5,7 @@ const TabsList = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      'inline-flex h-9 items-center justify-center rounded-lg bg-secondary p-1 text-muted-foreground border border-border/60',
+      'inline-flex items-center justify-center rounded-md bg-secondary p-1 text-foreground',
       className
     )}
     {...props}
@@ -19,7 +19,7 @@ const TabsTrigger = React.forwardRef(({ className, active, ...props }, ref) => (
     type="button"
     data-state={active ? 'active' : 'inactive'}
     className={cn(
-      'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+      'inline-flex items-center justify-center whitespace-nowrap rounded px-3.5 py-1.5 text-xs font-semibold text-foreground/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold hover:text-foreground',
       className
     )}
     {...props}
@@ -28,4 +28,3 @@ const TabsTrigger = React.forwardRef(({ className, active, ...props }, ref) => (
 TabsTrigger.displayName = 'TabsTrigger';
 
 export { TabsList, TabsTrigger };
-

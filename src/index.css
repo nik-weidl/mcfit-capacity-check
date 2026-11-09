@@ -3,28 +3,49 @@
 @tailwind utilities;
 
 @layer base {
-  :root,
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 5.5%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 5.5%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 47.9 95.8% 53.1%;
-    --primary-foreground: 26 83.3% 14.1%;
-    --secondary: 240 3.7% 13.5%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 13.5%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 240 10% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 4%;
+    --primary: 48 100% 50%;
+    --primary-foreground: 240 10% 4%;
+    --secondary: 240 5% 93%;
+    --secondary-foreground: 240 10% 4%;
+    --muted: 240 5% 93%;
+    --muted-foreground: 240 6% 25%;
+    --accent: 48 100% 50%;
+    --accent-foreground: 240 10% 4%;
+    --destructive: 0 84% 50%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 47.9 95.8% 53.1%;
-    --radius: 0.75rem;
+    --border: 240 6% 83%;
+    --input: 240 6% 80%;
+    --ring: 240 10% 4%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 4%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 6.5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 6.5%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 48 100% 50%;
+    --primary-foreground: 240 10% 4%;
+    --secondary: 240 4% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 4% 15%;
+    --muted-foreground: 240 5% 78%;
+    --accent: 48 100% 50%;
+    --accent-foreground: 240 10% 4%;
+    --destructive: 0 63% 40%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 20%;
+    --input: 240 4% 22%;
+    --ring: 48 100% 50%;
   }
 
   * {
@@ -36,43 +57,35 @@
   }
 }
 
-/* Keyless OpenStreetMap Dark Mode Filter */
 .leaflet-layer.dark-osm-tiles {
   filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(92%) saturate(85%);
 }
 
 .leaflet-container {
-  background: #09090b !important;
+  background: hsl(var(--secondary)) !important;
   font-family: inherit !important;
 }
 
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
-  background: hsl(240 10% 7%) !important;
-  color: hsl(0 0% 98%) !important;
-  border: 1px solid hsl(240 3.7% 18%);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65) !important;
-  border-radius: 0.65rem !important;
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  border: 1px solid hsl(var(--border));
+  box-shadow: none !important;
+  border-radius: 0.5rem !important;
 }
 
 .mcfit-map-pin {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'JetBrains Mono', monospace;
   font-weight: 800;
-  font-size: 0.7rem;
-  border-radius: 999px;
-  padding: 2px 6px;
-  border: 2px solid #09090b;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  border-radius: 4px;
+  padding: 2px 5px;
+  border: 1.5px solid #09090b;
   white-space: nowrap;
-  transition: transform 0.15s ease;
-}
-
-.mcfit-map-pin:hover {
-  transform: scale(1.15);
-  z-index: 999 !important;
 }
 
 .mcfit-map-pin.pin-low {
@@ -82,31 +95,25 @@
 
 .mcfit-map-pin.pin-normal {
   background: #f59e0b;
-  color: #271202;
+  color: #1c0a00;
 }
 
 .mcfit-map-pin.pin-high {
-  background: #ef4444;
+  background: #e11d48;
   color: #fff;
 }
 
 .mcfit-map-pin.pin-selected {
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 3px #facc15, 0 4px 14px rgba(0, 0, 0, 0.8);
-  transform: scale(1.18);
+  outline: 2.5px solid #09090b;
+  background: #ffd100;
+  color: #09090b;
 }
 
 .mcfit-map-dot {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  border: 2px solid #09090b;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
-  transition: transform 0.15s ease;
-}
-
-.mcfit-map-dot:hover {
-  transform: scale(1.4);
+  border: 1.5px solid #09090b;
 }
 
 .mcfit-map-dot.pin-low {
@@ -118,6 +125,5 @@
 }
 
 .mcfit-map-dot.pin-high {
-  background: #ef4444;
+  background: #e11d48;
 }
-

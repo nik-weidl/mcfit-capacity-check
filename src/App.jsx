@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Navigation, RefreshCw, Search } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +31,59 @@ const DAY_TABS = [
 
 const HORIZONS = [1, 2, 3, 4, 6];
 
+/**
+ * Generates a periodic, C2-continuous uniform cubic B-spline SVG path (`M ... C ...`)
+ * that wraps seamlessly from hour 23 -> hour 00 across the left (x=0) and right (x=2400) edges.
+ */
+function buildSmoothCurvePath(values) {
+  if (!values || values.length === 0) return '';
+  const n = values.length; // 24 hours
+
+  const getPt = (idx) => {
+    const wrappedIdx = ((idx % n) + n) % n;
+    const val = Math.max(1, Math.min(99, values[wrappedIdx]));
+    return {
+      x: idx * 100 + 50,
+      y: 300 - val * 3,
+    };
+  };
+
+  // Start at i = -1 (x = -50) and end at i = n (x = 2450) so the curve extends
+  // all the way through x = 0 and x = 2400 with identical height and slope at both edges.
+  const startIdx = -1;
+  const endIdx = n;
+
+  const knot = (i) => {
+    const pPrev = getPt(i - 1);
+    const pCurr = getPt(i);
+    const pNext = getPt(i + 1);
+    return {
+      x: (pPrev.x + 4 * pCurr.x + pNext.x) / 6,
+      y: (pPrev.y + 4 * pCurr.y + pNext.y) / 6,
+    };
+  };
+
+  const first = knot(startIdx);
+  let d = `M ${first.x.toFixed(1)},${first.y.toFixed(1)}`;
+
+  for (let i = startIdx; i < endIdx; i++) {
+    const pCurr = getPt(i);
+    const pNext = getPt(i + 1);
+    const cp1x = (4 * pCurr.x + 2 * pNext.x) / 6;
+    const cp1y = (4 * pCurr.y + 2 * pNext.y) / 6;
+    const cp2x = (2 * pCurr.x + 4 * pNext.x) / 6;
+    const cp2y = (2 * pCurr.y + 4 * pNext.y) / 6;
+    const end = knot(i + 1);
+    d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${end.x.toFixed(1)},${end.y.toFixed(1)}`;
+  }
+
+  return d;
+}
+
 export default function App() {
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('mcfit_theme') || 'light'
+  );
   const [studios, setStudios] = useState([]);
   const [history, setHistory] = useState({ studios: {} });
   const [liveCache, setLiveCache] = useState({});
@@ -44,7 +96,11 @@ export default function App() {
   const [horizonHours, setHorizonHours] = useState(2);
   const [selectedDayTab, setSelectedDayTab] = useState('today');
   const [fitBoundsTrigger, setFitBoundsTrigger] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('mcfit_theme', theme);
+  }, [theme]);
 
   const fetchLiveStudio = useCallback(async (studioId) => {
     try {
@@ -145,7 +201,6 @@ export default function App() {
     return list;
   }, [studios, selectedCity, searchQuery, sortBy, history, liveCache]);
 
-  // Prefetch live percentages when viewing a city (<= 25 studios)
   useEffect(() => {
     if (filteredStudios.length === 0 || filteredStudios.length > 25) return;
     filteredStudios.forEach((s) => {
@@ -194,14 +249,12 @@ export default function App() {
 
   const handleRefresh = async () => {
     if (!activeStudio) return;
-    setIsRefreshing(true);
     await fetchLiveStudio(activeStudio.id);
-    setIsRefreshing(false);
   };
 
   if (!activeStudio || !todayModel) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center text-sm text-foreground">
         Loading studios...
       </div>
     );
@@ -265,36 +318,48 @@ export default function App() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-50 border-b border-border/80 bg-background/85 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-border bg-background">
         <div className="container flex h-14 items-center justify-between">
           <h1 className="text-base font-bold tracking-tight">McFIT Capacity</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleLocateMe}>
-              <Navigation className="h-3.5 w-3.5" />
               Near Me
             </Button>
             <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />
               Refresh
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
+              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? (
+                <Moon className="h-4 w-4" />
+              ) : (
+                <Sun className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container space-y-6 py-6">
+      <main className="container space-y-10 py-8">
         {/* MAIN FEATURE: Enlarged Hero Studio Capacity, Forecast & 24h Graph */}
-        <Card className="border-border/90 shadow-lg">
-          <CardHeader className="flex flex-col gap-4 pb-4 md:flex-row md:items-start md:justify-between">
+        <Card className="p-2 md:p-4">
+          <CardHeader className="flex flex-col gap-5 pb-8 md:flex-row md:items-start md:justify-between">
             <div>
-              <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+              <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
                 {formatStudioName(activeStudio.name)}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1.5 text-sm font-medium text-muted-foreground">
                 {activeStudio.street}, {activeStudio.zipCode} {activeStudio.city}
               </p>
             </div>
 
-            <TabsList className="flex-wrap h-auto">
+            <TabsList className="h-auto flex-wrap">
               {DAY_TABS.map((tab) => (
                 <TabsTrigger
                   key={tab.id}
@@ -307,24 +372,24 @@ export default function App() {
             </TabsList>
           </CardHeader>
 
-          <CardContent className="space-y-6">
-            {/* Hero KPI Strip */}
-            <div className="grid grid-cols-1 gap-6 rounded-xl border border-border bg-secondary/40 p-5 md:grid-cols-3">
+          <CardContent className="space-y-12">
+            {/* Hero KPI Row */}
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-12">
               {/* 1. Live Now */}
-              <div className="flex flex-col justify-between space-y-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="flex flex-col justify-between space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Now ({String(currentSlot.hour).padStart(2, '0')}:00–
                   {String(nextH).padStart(2, '0')}:00)
                 </span>
                 <div
                   className={cn(
-                    'font-mono text-5xl font-extrabold tracking-tight tabular-nums md:text-6xl',
+                    'text-6xl font-black tracking-tight tabular-nums',
                     currentLvl.textClass
                   )}
                 >
                   {currentSlot.percentage}%
                 </div>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-sm font-medium text-muted-foreground">
                   {Math.abs(diffVsTypical) <= 3
                     ? `Typical ${dayShort}: ${currentSlot.typical}%`
                     : `${diffVsTypical > 0 ? `+${diffVsTypical}%` : `${diffVsTypical}%`} vs. typical ${dayShort} (${currentSlot.typical}%)`}
@@ -332,9 +397,9 @@ export default function App() {
               </div>
 
               {/* 2. In X Hours Forecast */}
-              <div className="flex flex-col justify-between space-y-1 border-y border-border py-4 md:border-x md:border-y-0 md:px-6 md:py-0">
+              <div className="flex flex-col justify-between space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     In +{horizonHours}h ({String(targetHour).padStart(2, '0')}:00
                     {isTomorrow ? ' +1d' : ''})
                   </span>
@@ -345,10 +410,10 @@ export default function App() {
                         type="button"
                         onClick={() => setHorizonHours(h)}
                         className={cn(
-                          'rounded px-2 py-0.5 font-mono text-xs font-bold transition-colors',
+                          'rounded px-2.5 py-1 text-xs font-bold tabular-nums transition-colors',
                           horizonHours === h
-                            ? 'bg-sky-400 text-zinc-950'
-                            : 'bg-background text-muted-foreground hover:text-foreground border border-border'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary text-foreground/80 hover:text-foreground'
                         )}
                       >
                         +{h}h
@@ -356,32 +421,32 @@ export default function App() {
                     ))}
                   </div>
                 </div>
-                <div className="font-mono text-5xl font-extrabold tracking-tight text-sky-400 tabular-nums md:text-6xl">
+                <div className="text-6xl font-black tracking-tight text-indigo-700 tabular-nums dark:text-indigo-400">
                   {predictedPct}%
                 </div>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-sm font-medium text-muted-foreground">
                   {deltaFromNow >= 0 ? `+${deltaFromNow}%` : `${deltaFromNow}%`} vs. now &middot;
                   Typical {SHORT_DAYS[targetDow]}: {typicalAtTarget}%
                 </span>
               </div>
 
               {/* 3. Best & Peak Windows */}
-              <div className="flex flex-col justify-center gap-3.5">
-                <div>
-                  <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="flex flex-col justify-between gap-6">
+                <div className="space-y-1">
+                  <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Best Time Today
                   </span>
-                  <span className="font-mono text-xl font-bold text-emerald-400 tabular-nums">
+                  <span className="text-2xl font-extrabold text-emerald-700 tabular-nums dark:text-emerald-400">
                     {bestSlot
                       ? `${String(bestSlot.hour).padStart(2, '0')}:00–${String(bestSlot.hour + 1).padStart(2, '0')}:00 (${bestSlot.percentage}%)`
                       : '--'}
                   </span>
                 </div>
-                <div>
-                  <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="space-y-1">
+                  <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Peak Rush
                   </span>
-                  <span className="font-mono text-xl font-bold text-rose-400 tabular-nums">
+                  <span className="text-2xl font-extrabold text-rose-700 tabular-nums dark:text-rose-400">
                     {peakSlot
                       ? `${String(peakSlot.hour).padStart(2, '0')}:00–${String(peakSlot.hour + 1).padStart(2, '0')}:00 (${peakSlot.percentage}%)`
                       : '--'}
@@ -391,97 +456,110 @@ export default function App() {
             </div>
 
             {/* Enlarged 24-Hour Interactive Bar Chart */}
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-base font-semibold tracking-tight">{chartTitle}</h3>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-base font-bold tracking-tight">{chartTitle}</h3>
+                <div className="flex flex-wrap items-center gap-5 text-xs font-semibold text-foreground/85">
                   <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> &lt;45%
+                    <span className="h-2.5 w-2.5 rounded-sm bg-emerald-600 dark:bg-emerald-500" /> &lt;45%
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-sm bg-amber-500" /> 45–74%
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-sm bg-rose-500" /> &ge;75%
+                    <span className="h-2.5 w-2.5 rounded-sm bg-rose-600 dark:bg-rose-500" /> &ge;75%
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-sm border border-dashed border-sky-400 bg-sky-400/30" />{' '}
+                    <span className="h-2.5 w-2.5 rounded-sm bg-indigo-600 dark:bg-indigo-500" />{' '}
                     Forecast
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="h-1 w-2.5 rounded-full bg-white/75" /> Typical
+                    <span className="h-0.5 w-3 bg-foreground" /> Typical
                   </span>
                 </div>
               </div>
 
-              <div className="grid w-full grid-cols-[repeat(24,minmax(0,1fr))] items-end gap-1.5 overflow-hidden border-b border-border pt-2">
-                {displayHours.map((slot) => {
-                  const lvl = getLevelInfo(slot.percentage);
-                  const isTarget =
-                    selectedDayTab === 'today' && !isTomorrow && slot.hour === targetHour;
-                  const heightPct = Math.max(4, Math.min(100, slot.percentage));
-                  const typicalBottomPct = Math.max(2, Math.min(98, slot.typical));
+              <div className="relative w-full">
+                {/* Periodic C2 Cubic B-Spline for Typical Curve (extends edge-to-edge 0..2400) */}
+                <svg
+                  viewBox="0 0 2400 300"
+                  preserveAspectRatio="none"
+                  className="pointer-events-none absolute inset-x-0 top-8 z-20 h-[300px] w-full overflow-hidden"
+                >
+                  <path
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                    className="text-foreground"
+                    d={buildSmoothCurvePath(displayHours.map((slot) => slot.typical))}
+                  />
+                </svg>
 
-                  return (
-                    <div
-                      key={slot.hour}
-                      onClick={() => {
-                        if (selectedDayTab === 'today' && slot.hour > todayModel.activeHour) {
-                          setHorizonHours(slot.hour - todayModel.activeHour);
-                        }
-                      }}
-                      title={`${String(slot.hour).padStart(2, '0')}:00 — ${slot.isForecast ? 'Forecast' : 'Actual'}: ${slot.percentage}% (Typical: ${slot.typical}%)`}
-                      className="group flex min-w-0 cursor-pointer flex-col items-center justify-end"
-                    >
-                      <span
-                        className={cn(
-                          'mb-1.5 font-mono text-[11px] font-bold leading-none tabular-nums text-muted-foreground',
-                          slot.isCurrent && 'text-primary font-extrabold',
-                          isTarget && 'text-sky-400 font-extrabold'
-                        )}
+                <div className="grid w-full grid-cols-[repeat(24,minmax(0,1fr))] items-end overflow-hidden border-b border-border pt-2">
+                  {displayHours.map((slot) => {
+                    const lvl = getLevelInfo(slot.percentage);
+                    const isTarget =
+                      selectedDayTab === 'today' && !isTomorrow && slot.hour === targetHour;
+                    const heightPct = Math.max(4, Math.min(100, slot.percentage));
+
+                    return (
+                      <div
+                        key={slot.hour}
+                        onClick={() => {
+                          if (selectedDayTab === 'today' && slot.hour > todayModel.activeHour) {
+                            setHorizonHours(slot.hour - todayModel.activeHour);
+                          }
+                        }}
+                        title={`${String(slot.hour).padStart(2, '0')}:00 — ${slot.isForecast ? 'Forecast' : 'Actual'}: ${slot.percentage}% (Typical: ${slot.typical}%)`}
+                        className="flex min-w-0 cursor-pointer flex-col items-center justify-end px-[3px]"
                       >
-                        {slot.percentage}%
-                      </span>
-
-                      <div className="relative flex h-[300px] w-full items-end rounded-t-md bg-secondary/35">
-                        <div
-                          className="pointer-events-none absolute left-[10%] right-[10%] z-10 h-[3px] rounded-full bg-white/75"
-                          style={{ bottom: `${typicalBottomPct}%` }}
-                        />
-                        <div
+                        <span
                           className={cn(
-                            'w-full rounded-t-md transition-all duration-200 group-hover:brightness-110',
-                            slot.isForecast
-                              ? 'border border-dashed border-sky-400 bg-sky-400/35'
-                              : lvl.barClass,
-                            slot.isCurrent &&
-                              'ring-2 ring-primary shadow-[0_0_14px_rgba(250,204,21,0.35)]',
-                            isTarget &&
-                              'ring-2 ring-sky-400 shadow-[0_0_14px_rgba(56,189,248,0.35)]'
+                            'mb-2 h-4 font-mono text-xs font-semibold leading-4 tabular-nums text-foreground/80',
+                            slot.isCurrent && 'font-black text-foreground',
+                            isTarget && 'font-black text-indigo-700 dark:text-indigo-300'
                           )}
-                          style={{ height: `${heightPct}%` }}
-                        />
-                      </div>
+                        >
+                          {slot.percentage}%
+                        </span>
 
-                      <span
-                        className={cn(
-                          'py-1.5 font-mono text-[11px] tabular-nums text-muted-foreground',
-                          slot.isCurrent && 'font-extrabold text-primary'
-                        )}
-                      >
-                        {String(slot.hour).padStart(2, '0')}
-                      </span>
-                    </div>
-                  );
-                })}
+                        <div className="relative flex h-[300px] w-full items-end bg-secondary">
+                          <div
+                            className={cn(
+                              'w-full',
+                              slot.isForecast
+                                ? 'bg-indigo-600/80 dark:bg-indigo-500/80'
+                                : lvl.barClass,
+                              slot.isCurrent && 'outline outline-2 outline-foreground',
+                              isTarget && 'outline outline-2 outline-primary'
+                            )}
+                            style={{ height: `${heightPct}%` }}
+                          />
+                        </div>
+
+                        <span
+                          className={cn(
+                            'py-2 font-mono text-xs font-medium tabular-nums text-foreground/80',
+                            slot.isCurrent && 'font-black text-foreground'
+                          )}
+                        >
+                          {String(slot.hour).padStart(2, '0')}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Map & Studio Finder Card */}
-        <Card>
-          <CardHeader className="pb-4">
+        <Card className="p-2 md:p-4">
+          <CardHeader className="pb-6">
             <div className="flex flex-wrap items-center gap-3">
               <NativeSelect
                 value={selectedCity}
@@ -499,8 +577,7 @@ export default function App() {
                 ))}
               </NativeSelect>
 
-              <div className="relative min-w-[220px] flex-1">
-                <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <div className="min-w-[220px] flex-1">
                 <Input
                   type="search"
                   placeholder="Search studio, street, or ZIP..."
@@ -509,7 +586,6 @@ export default function App() {
                     setSearchQuery(e.target.value);
                     setFitBoundsTrigger((n) => n + 1);
                   }}
-                  className="pl-9"
                 />
               </div>
 
@@ -527,7 +603,7 @@ export default function App() {
           </CardHeader>
 
           <CardContent>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.5fr_1fr]">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
               <GymMap
                 studios={filteredStudios}
                 selectedStudioId={selectedStudioId}
@@ -535,6 +611,7 @@ export default function App() {
                 liveCache={liveCache}
                 onSelectStudio={handleSelectStudio}
                 fitBoundsTrigger={fitBoundsTrigger}
+                theme={theme}
               />
 
               <div className="flex h-[460px] flex-col gap-1.5 overflow-y-auto pr-1">
@@ -553,20 +630,31 @@ export default function App() {
                       type="button"
                       onClick={() => handleSelectStudio(s.id)}
                       className={cn(
-                        'flex items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5 text-left transition-colors',
+                        'flex items-center justify-between gap-3 rounded-md border px-4 py-2.5 text-left transition-colors',
                         isSelected
-                          ? 'border-primary bg-primary/10 text-foreground'
-                          : 'border-border bg-secondary/40 hover:bg-secondary/80'
+                          ? 'border-foreground bg-primary text-primary-foreground'
+                          : 'border-border bg-card hover:bg-secondary'
                       )}
                     >
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold">{shortName}</div>
-                        <div className="truncate text-xs text-muted-foreground">{subText}</div>
+                        <div className="truncate text-sm font-bold">{shortName}</div>
+                        <div
+                          className={cn(
+                            'truncate text-xs font-medium',
+                            isSelected ? 'text-primary-foreground/85' : 'text-muted-foreground'
+                          )}
+                        >
+                          {subText}
+                        </div>
                       </div>
                       <span
                         className={cn(
                           'shrink-0 font-mono text-sm font-extrabold tabular-nums',
-                          lvl ? lvl.textClass : 'text-muted-foreground'
+                          isSelected
+                            ? 'text-primary-foreground'
+                            : lvl
+                              ? lvl.textClass
+                              : 'text-muted-foreground'
                         )}
                       >
                         {pct !== null ? `${pct}%` : '--%'}
@@ -580,17 +668,17 @@ export default function App() {
         </Card>
 
         {/* Weekly Overview Heatmap */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Weekly Overview</CardTitle>
+        <Card className="p-2 md:p-4">
+          <CardHeader className="pb-5">
+            <CardTitle className="text-lg">Weekly Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid w-full grid-cols-[56px_repeat(18,minmax(0,1fr))] gap-1 overflow-hidden">
-              <div className="py-1.5 text-center font-mono text-xs font-semibold text-muted-foreground" />
+            <div className="grid w-full grid-cols-[56px_repeat(18,minmax(0,1fr))] gap-1.5 overflow-hidden">
+              <div className="py-1.5 text-center font-mono text-xs font-bold text-foreground/80" />
               {Array.from({ length: 18 }, (_, i) => i + 6).map((h) => (
                 <div
                   key={h}
-                  className="py-1.5 text-center font-mono text-xs font-semibold text-muted-foreground"
+                  className="py-1.5 text-center font-mono text-xs font-bold text-foreground/85"
                 >
                   {String(h).padStart(2, '0')}
                 </div>
@@ -614,10 +702,14 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setSelectedDayTab(String(dow))}
-                      className="flex items-center rounded-md bg-secondary/60 px-2 py-1.5 text-left text-xs font-bold hover:ring-1 hover:ring-primary"
+                      className={cn(
+                        'flex items-center rounded px-2.5 py-2 text-left text-xs font-bold transition-colors',
+                        isToday
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-secondary text-foreground hover:bg-primary/40'
+                      )}
                     >
                       {SHORT_DAYS[dow]}
-                      {isToday ? ' •' : ''}
                     </button>
                     {Array.from({ length: 18 }, (_, i) => i + 6).map((h) => {
                       const pct = curve[h];
@@ -627,7 +719,7 @@ export default function App() {
                           key={h}
                           title={`${DAY_NAMES[dow]} ${String(h).padStart(2, '0')}:00 — ~${pct}%`}
                           className={cn(
-                            'rounded-md py-1.5 text-center font-mono text-xs font-semibold tabular-nums',
+                            'rounded py-2 text-center font-mono text-xs font-bold tabular-nums',
                             lvl.hmClass
                           )}
                         >
@@ -645,4 +737,3 @@ export default function App() {
     </div>
   );
 }
-

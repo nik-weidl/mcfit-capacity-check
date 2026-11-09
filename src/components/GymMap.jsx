@@ -15,9 +15,11 @@ export function GymMap({
   liveCache,
   onSelectStudio,
   fitBoundsTrigger,
+  theme = 'light',
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
+  const tileLayerRef = useRef(null);
   const markersLayerRef = useRef(null);
   const markerByIdRef = useRef({});
 
@@ -30,31 +32,6 @@ export function GymMap({
       zoomControl: true,
     });
 
-    const osmDark = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-      className: 'dark-osm-tiles',
-    });
-
-    const osmLight = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    });
-
-    osmDark.addTo(map);
-    L.control
-      .layers(
-        {
-          'OpenStreetMap Dark': osmDark,
-          'OpenStreetMap Light': osmLight,
-        },
-        null,
-        { position: 'topright' }
-      )
-      .addTo(map);
-
     const markersLayer = L.layerGroup().addTo(map);
     mapRef.current = map;
     markersLayerRef.current = markersLayer;
@@ -64,6 +41,26 @@ export function GymMap({
       mapRef.current = null;
     };
   }, []);
+
+  // Automatically sync OpenStreetMap tile style with light/dark theme
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (tileLayerRef.current) {
+      map.removeLayer(tileLayerRef.current);
+    }
+
+    const layer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+      className: theme === 'dark' ? 'dark-osm-tiles' : '',
+    });
+
+    layer.addTo(map);
+    tileLayerRef.current = layer;
+  }, [theme]);
 
   // Fit bounds when filter changes
   useEffect(() => {
@@ -125,10 +122,10 @@ export function GymMap({
         marker.bindPopup(`
           <div style="min-width: 170px;">
             <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 2px;">${formatStudioName(s.name)}</div>
-            <div style="font-size: 0.75rem; color: #a1a1aa; margin-bottom: 6px;">${s.street}, ${s.zipCode} ${s.city}</div>
-            <div style="display: flex; gap: 0.65rem; align-items: center; font-size: 0.8rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;">
-              <span style="color: ${pct < 45 ? '#34d399' : pct < 75 ? '#fbbf24' : '#f87171'};">${pct !== null ? `${pct}%` : '--%'}</span>
-              <span style="color: #38bdf8;">+2h: ~${in2hPct}%</span>
+            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 6px;">${s.street}, ${s.zipCode} ${s.city}</div>
+            <div style="display: flex; gap: 0.65rem; align-items: center; font-size: 0.82rem; font-weight: 700; font-variant-numeric: tabular-nums;">
+              <span style="color: ${pct < 45 ? '#10b981' : pct < 75 ? '#d97706' : '#e11d48'};">${pct !== null ? `${pct}%` : '--%'}</span>
+              <span style="color: #0284c7;">+2h: ~${in2hPct}%</span>
             </div>
           </div>
         `);
@@ -163,7 +160,7 @@ export function GymMap({
   }, [selectedStudioId]);
 
   return (
-    <div className="relative h-[460px] w-full overflow-hidden rounded-xl border border-border bg-zinc-950">
+    <div className="relative h-[460px] w-full overflow-hidden rounded-xl border border-border bg-secondary">
       <div ref={containerRef} className="h-full w-full" />
     </div>
   );

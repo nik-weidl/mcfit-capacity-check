@@ -26,24 +26,24 @@ export function formatStudioName(name) {
 export function getLevelInfo(pct) {
   if (pct < 45) {
     return {
-      textClass: 'text-emerald-400',
-      barClass: 'bg-emerald-500',
-      hmClass: 'bg-emerald-500/15 text-emerald-300',
+      textClass: 'text-emerald-700 dark:text-emerald-400',
+      barClass: 'bg-emerald-600 dark:bg-emerald-500',
+      hmClass: 'bg-emerald-100 text-emerald-950 dark:bg-emerald-950/80 dark:text-emerald-200',
       pinCls: 'pin-low',
     };
   }
   if (pct < 75) {
     return {
-      textClass: 'text-amber-400',
+      textClass: 'text-amber-700 dark:text-amber-400',
       barClass: 'bg-amber-500',
-      hmClass: 'bg-amber-500/20 text-amber-300',
+      hmClass: 'bg-amber-100 text-amber-950 dark:bg-amber-950/80 dark:text-amber-200',
       pinCls: 'pin-normal',
     };
   }
   return {
-    textClass: 'text-rose-400',
-    barClass: 'bg-rose-500',
-    hmClass: 'bg-rose-500/25 text-rose-300',
+    textClass: 'text-rose-700 dark:text-rose-400',
+    barClass: 'bg-rose-600 dark:bg-rose-500',
+    hmClass: 'bg-rose-100 text-rose-950 dark:bg-rose-950/80 dark:text-rose-200',
     pinCls: 'pin-high',
   };
 }
