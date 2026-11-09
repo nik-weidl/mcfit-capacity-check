@@ -15,7 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const DATA_DIR = path.join(__dirname, '..', 'public', 'data');
 const STUDIOS_FILE = path.join(DATA_DIR, 'studios.json');
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 

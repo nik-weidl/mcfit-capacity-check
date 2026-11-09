@@ -1,158 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>McFIT Capacity Check</title>
+  <title>McFIT Capacity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap"
     rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
   />
-  <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
-  <header class="top-header">
-    <div class="container header-inner">
-      <h1>McFIT Capacity</h1>
-      <div class="header-actions">
-        <button id="locate-me-btn" class="btn-secondary" title="Find nearest studio">
-          Near Me
-        </button>
-        <button id="refresh-btn" class="btn-secondary" title="Refresh live data">
-          Refresh
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <main class="container main-content">
-    <!-- MAIN FEATURE: Hero Studio Capacity, "In X Hours" Predictor & Large 24h Forecast Graph -->
-    <section class="card hero-forecast-card">
-      <div class="hero-top-bar">
-        <div>
-          <h2 id="active-studio-name" class="hero-studio-title">Loading&hellip;</h2>
-          <p id="active-studio-address" class="studio-address">&mdash;</p>
-        </div>
-        <div class="day-selector" id="day-selector">
-          <button class="day-btn active" data-day="today">Today</button>
-          <button class="day-btn" data-day="1">Mon</button>
-          <button class="day-btn" data-day="2">Tue</button>
-          <button class="day-btn" data-day="3">Wed</button>
-          <button class="day-btn" data-day="4">Thu</button>
-          <button class="day-btn" data-day="5">Fri</button>
-          <button class="day-btn" data-day="6">Sat</button>
-          <button class="day-btn" data-day="0">Sun</button>
-        </div>
-      </div>
-
-      <!-- Large Hero Readouts: Live Now + In X Hours Prediction + Best/Peak Times -->
-      <div class="hero-stats-strip">
-        <div class="hero-stat-block">
-          <span class="hero-stat-label">NOW (<span id="live-hour-label">--:00</span>)</span>
-          <div class="hero-stat-main">
-            <span id="live-percentage" class="hero-stat-value">--%</span>
-          </div>
-          <span id="live-vs-typical" class="hero-stat-sub">&mdash;</span>
-        </div>
-
-        <div class="hero-stat-block forecast-block">
-          <div class="forecast-header-row">
-            <span class="hero-stat-label">IN X HOURS (<span id="predicted-time-label">--:00</span>)</span>
-            <div class="horizon-pills" id="horizon-pills">
-              <button class="horizon-pill" data-hours="1">+1h</button>
-              <button class="horizon-pill active" data-hours="2">+2h</button>
-              <button class="horizon-pill" data-hours="3">+3h</button>
-              <button class="horizon-pill" data-hours="4">+4h</button>
-              <button class="horizon-pill" data-hours="6">+6h</button>
-            </div>
-          </div>
-          <div class="hero-stat-main">
-            <span id="predicted-percentage" class="hero-stat-value forecast-accent">--%</span>
-          </div>
-          <span id="predicted-explanation" class="hero-stat-sub">&mdash;</span>
-        </div>
-
-        <div class="hero-stat-block windows-block">
-          <div class="window-stat">
-            <span class="hero-stat-label">BEST TIME TODAY</span>
-            <strong id="best-window-text" class="window-val good-text">--:00</strong>
-          </div>
-          <div class="window-stat">
-            <span class="hero-stat-label">PEAK RUSH</span>
-            <strong id="peak-window-text" class="window-val warn-text">--:00</strong>
-          </div>
-        </div>
-      </div>
-
-      <!-- Enlarged 24-Hour Interactive Bar Chart -->
-      <div class="chart-section">
-        <div class="chart-subbar">
-          <h3 id="chart-title">Today</h3>
-          <div class="chart-legend">
-            <span class="legend-item"><span class="swatch swatch-low"></span> &lt;45%</span>
-            <span class="legend-item"><span class="swatch swatch-normal"></span> 45&ndash;74%</span>
-            <span class="legend-item"><span class="swatch swatch-high"></span> &ge;75%</span>
-            <span class="legend-item"><span class="swatch swatch-forecast"></span> Forecast</span>
-            <span class="legend-item"><span class="swatch-dot"></span> Typical</span>
-          </div>
-        </div>
-        <div id="hourly-chart" class="hourly-chart" aria-label="Hourly capacity chart"></div>
-      </div>
-    </section>
-
-    <!-- Interactive Map + Studio Finder -->
-    <section class="card finder-card">
-      <div class="picker-top-row">
-        <div class="filter-controls">
-          <select id="city-select" class="city-select" aria-label="Select city">
-            <option value="All">All Cities</option>
-          </select>
-          <div class="search-box">
-            <input
-              type="search"
-              id="studio-search"
-              placeholder="Search studio, street, or ZIP..."
-              autocomplete="off"
-            />
-          </div>
-          <select id="studio-sort" class="city-select" aria-label="Sort studios">
-            <option value="city">City / Name</option>
-            <option value="lowest-now">Quietest Now</option>
-            <option value="lowest-2h">Quietest +2h</option>
-            <option value="highest-now">Busiest Now</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="map-and-list">
-        <div class="map-container-wrap">
-          <div id="gym-map" class="gym-map" aria-label="Studio map"></div>
-        </div>
-
-        <div class="studio-list-panel">
-          <div id="studio-grid" class="studio-grid"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Weekly Overview Heatmap -->
-    <section class="card heatmap-card">
-      <div class="heatmap-header">
-        <h3>Weekly Overview</h3>
-      </div>
-      <div class="heatmap-wrapper">
-        <div id="weekly-heatmap" class="weekly-heatmap"></div>
-      </div>
-    </section>
-  </main>
-
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-  <script src="app.js" type="module"></script>
+<body class="min-h-screen bg-background text-foreground antialiased selection:bg-primary selection:text-primary-foreground">
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
