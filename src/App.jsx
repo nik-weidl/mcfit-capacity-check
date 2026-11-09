@@ -851,7 +851,7 @@ export default function App() {
                 </div>
               )}
 
-              <div className="flex h-[380px] w-full min-w-0 flex-col gap-2 overflow-y-auto pr-1 sm:h-[460px]">
+              <div className="h-[380px] w-full min-w-0 space-y-2 overflow-y-auto pr-2 sm:h-[460px]">
                 {filteredStudios.map((s) => {
                   const pct = getStudioCurrentPct(s.id, history, liveCache);
                   const lvl = pct !== null ? getLevelInfo(pct) : null;
@@ -867,17 +867,17 @@ export default function App() {
                       type="button"
                       onClick={() => handleSelectStudio(s.id)}
                       className={cn(
-                        'flex min-h-[54px] w-full min-w-0 touch-manipulation items-center justify-between gap-3 rounded-md border px-4 py-3 text-left transition-colors lg:min-h-0 lg:py-2.5',
+                        'flex w-full min-w-0 shrink-0 touch-manipulation items-center justify-between gap-4 rounded-md border px-4 py-3 text-left transition-colors',
                         isSelected
                           ? 'border-foreground bg-primary text-primary-foreground'
                           : 'border-border bg-card hover:bg-secondary'
                       )}
                     >
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-bold">{shortName}</div>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="truncate text-sm font-bold leading-snug">{shortName}</div>
                         <div
                           className={cn(
-                            'truncate text-xs font-medium',
+                            'truncate text-xs font-medium leading-snug',
                             isSelected ? 'text-primary-foreground/85' : 'text-muted-foreground'
                           )}
                         >
