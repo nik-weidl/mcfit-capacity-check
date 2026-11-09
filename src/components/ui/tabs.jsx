@@ -5,7 +5,7 @@ const TabsList = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      'inline-flex items-center justify-center rounded-md bg-secondary p-1 text-foreground',
+      'inline-flex items-center justify-center rounded-md text-foreground lg:bg-secondary lg:p-1',
       className
     )}
     {...props}
@@ -19,7 +19,7 @@ const TabsTrigger = React.forwardRef(({ className, active, ...props }, ref) => (
     type="button"
     data-state={active ? 'active' : 'inactive'}
     className={cn(
-      'inline-flex items-center justify-center whitespace-nowrap rounded px-3.5 py-1.5 text-xs font-semibold text-foreground/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:font-bold hover:text-foreground',
+      'inline-flex h-11 min-h-[44px] touch-manipulation items-center justify-center whitespace-nowrap rounded-md border border-border bg-secondary px-3 text-sm font-semibold text-foreground/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=active]:border-foreground data-[state=active]:bg-primary data-[state=active]:font-bold data-[state=active]:text-primary-foreground hover:text-foreground lg:h-8 lg:min-h-0 lg:rounded lg:border-0 lg:bg-transparent lg:px-3.5 lg:py-1.5 lg:text-xs data-[state=active]:lg:border-0',
       className
     )}
     {...props}

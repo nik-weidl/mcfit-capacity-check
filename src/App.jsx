@@ -33,23 +33,72 @@ const HORIZONS = [1, 2, 3, 4, 6];
 
 /**
  * Generates a periodic, C2-continuous uniform cubic B-spline SVG path (`M ... C ...`)
- * that wraps seamlessly from hour 23 -> hour 00 across the left (x=0) and right (x=2400) edges.
+ * that wraps seamlessly across the left and right edges for the desktop horizontal chart.
  */
-function buildSmoothCurvePath(values) {
+function buildSmoothCurvePath(values, width = 2400, height = 300, wrap = true) {
   if (!values || values.length === 0) return '';
-  const n = values.length; // 24 hours
+  const n = values.length;
+  const stepX = width / n;
 
   const getPt = (idx) => {
-    const wrappedIdx = ((idx % n) + n) % n;
-    const val = Math.max(1, Math.min(99, values[wrappedIdx]));
+    const clampedOrWrappedIdx = wrap
+      ? ((idx % n) + n) % n
+      : Math.max(0, Math.min(n - 1, idx));
+    const val = Math.max(1, Math.min(99, values[clampedOrWrappedIdx]));
     return {
-      x: idx * 100 + 50,
-      y: 300 - val * 3,
+      x: idx * stepX + stepX / 2,
+      y: height - (val / 100) * height,
     };
   };
 
-  // Start at i = -1 (x = -50) and end at i = n (x = 2450) so the curve extends
-  // all the way through x = 0 and x = 2400 with identical height and slope at both edges.
+  const startIdx = -1;
+  const endIdx = n;
+
+  const knot = (i) => {
+    const pPrev = getPt(i - 1);
+    const pCurr = getPt(i);
+    const pNext = getPt(i + 1);
+    return {
+      x: (pPrev.x + 4 * pCurr.x + pNext.x) / 6,
+      y: (pPrev.y + 4 * pCurr.y + pNext.y) / 6,
+    };
+  };
+
+  const first = knot(startIdx);
+  let d = `M ${first.x.toFixed(1)},${first.y.toFixed(1)}`;
+
+  for (let i = startIdx; i < endIdx; i++) {
+    const pCurr = getPt(i);
+    const pNext = getPt(i + 1);
+    const cp1x = (4 * pCurr.x + 2 * pNext.x) / 6;
+    const cp1y = (4 * pCurr.y + 2 * pNext.y) / 6;
+    const cp2x = (2 * pCurr.x + 4 * pNext.x) / 6;
+    const cp2y = (2 * pCurr.y + 4 * pNext.y) / 6;
+    const end = knot(i + 1);
+    d += ` C ${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${end.x.toFixed(1)},${end.y.toFixed(1)}`;
+  }
+
+  return d;
+}
+
+/**
+ * Generates a vertical C2-continuous uniform cubic B-spline SVG path (`M ... C ...`)
+ * flowing top-to-bottom across horizontal bars for the mobile vertical timeline chart.
+ */
+function buildSmoothVerticalCurvePath(values, width = 300, height = 1800) {
+  if (!values || values.length === 0) return '';
+  const n = values.length;
+  const stepY = height / n;
+
+  const getPt = (idx) => {
+    const clampedIdx = Math.max(0, Math.min(n - 1, idx));
+    const val = Math.max(1, Math.min(99, values[clampedIdx]));
+    return {
+      x: (val / 100) * width,
+      y: idx * stepY + stepY / 2,
+    };
+  };
+
   const startIdx = -1;
   const endIdx = n;
 
@@ -84,6 +133,9 @@ export default function App() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem('mcfit_theme') || 'light'
   );
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true
+  );
   const [studios, setStudios] = useState([]);
   const [history, setHistory] = useState({ studios: {} });
   const [liveCache, setLiveCache] = useState({});
@@ -96,6 +148,14 @@ export default function App() {
   const [horizonHours, setHorizonHours] = useState(2);
   const [selectedDayTab, setSelectedDayTab] = useState('today');
   const [fitBoundsTrigger, setFitBoundsTrigger] = useState(0);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const handler = (e) => setIsDesktop(e.matches);
+    setIsDesktop(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
@@ -223,6 +283,7 @@ export default function App() {
   const handleSelectStudio = useCallback((id) => {
     setSelectedStudioId(id);
     localStorage.setItem('mcfit_selected_studio', id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const handleLocateMe = () => {
@@ -262,7 +323,6 @@ export default function App() {
 
   const currentSlot = todayModel.hours[todayModel.activeHour] || todayModel.hours[0];
   const currentLvl = getLevelInfo(currentSlot.percentage);
-  const nextH = (currentSlot.hour + 1) % 24;
   const diffVsTypical = currentSlot.percentage - currentSlot.typical;
   const dayShort = SHORT_DAYS[todayModel.dayOfWeek];
 
@@ -310,18 +370,23 @@ export default function App() {
           isForecast: false,
         }));
 
+  // Active gym hours (06:00 to 23:00) for the mobile vertical horizontal-bar timeline
+  const mobileHours = displayHours.slice(6, 24);
+
   const chartTitle =
     selectedDayTab === 'today'
       ? `Today (${DAY_NAMES[todayModel.dayOfWeek]})`
       : DAY_NAMES[parseInt(selectedDayTab, 10)];
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-background text-foreground">
       {/* Top Navbar */}
       <header className="sticky top-0 z-50 border-b border-border bg-background">
-        <div className="container flex h-14 items-center justify-between">
-          <h1 className="text-base font-bold tracking-tight">McFIT Capacity</h1>
-          <div className="flex items-center gap-2">
+        <div className="container flex h-16 items-center justify-between gap-2 lg:h-14">
+          <h1 className="truncate text-base font-bold tracking-tight sm:text-lg lg:text-base">
+            McFIT Capacity
+          </h1>
+          <div className="flex shrink-0 items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleLocateMe}>
               Near Me
             </Button>
@@ -331,7 +396,6 @@ export default function App() {
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8"
               onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
               title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               aria-label="Toggle theme"
@@ -346,25 +410,26 @@ export default function App() {
         </div>
       </header>
 
-      <main className="container space-y-10 py-8">
-        {/* MAIN FEATURE: Enlarged Hero Studio Capacity, Forecast & 24h Graph */}
-        <Card className="p-2 md:p-4">
-          <CardHeader className="flex flex-col gap-5 pb-8 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+      <main className="container min-w-0 space-y-5 py-4 md:space-y-10 md:py-8">
+        {/* MAIN FEATURE: Studio Capacity, Forecast & Graph */}
+        <Card className="min-w-0 overflow-hidden p-0 md:p-4">
+          <CardHeader className="flex min-w-0 flex-col gap-4 pb-5 lg:flex-row lg:items-start lg:justify-between lg:pb-8">
+            <div className="min-w-0">
+              <h2 className="truncate text-2xl font-extrabold tracking-tight sm:text-3xl md:text-4xl">
                 {formatStudioName(activeStudio.name)}
               </h2>
-              <p className="mt-1.5 text-sm font-medium text-muted-foreground">
+              <p className="mt-1 truncate text-xs font-medium text-muted-foreground sm:text-sm">
                 {activeStudio.street}, {activeStudio.zipCode} {activeStudio.city}
               </p>
             </div>
 
-            <TabsList className="h-auto flex-wrap">
+            <TabsList className="grid h-auto w-full grid-cols-4 gap-2 lg:inline-flex lg:w-auto lg:flex-wrap lg:gap-1">
               {DAY_TABS.map((tab) => (
                 <TabsTrigger
                   key={tab.id}
                   active={selectedDayTab === tab.id}
                   onClick={() => setSelectedDayTab(tab.id)}
+                  className="w-full lg:w-auto"
                 >
                   {tab.label}
                 </TabsTrigger>
@@ -372,94 +437,114 @@ export default function App() {
             </TabsList>
           </CardHeader>
 
-          <CardContent className="space-y-12">
-            {/* Hero KPI Row */}
-            <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-12">
-              {/* 1. Live Now */}
-              <div className="flex flex-col justify-between space-y-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Now ({String(currentSlot.hour).padStart(2, '0')}:00–
-                  {String(nextH).padStart(2, '0')}:00)
-                </span>
-                <div
-                  className={cn(
-                    'text-6xl font-black tracking-tight tabular-nums',
-                    currentLvl.textClass
-                  )}
-                >
-                  {currentSlot.percentage}%
-                </div>
-                <span className="text-sm font-medium text-muted-foreground">
-                  {Math.abs(diffVsTypical) <= 3
-                    ? `Typical ${dayShort}: ${currentSlot.typical}%`
-                    : `${diffVsTypical > 0 ? `+${diffVsTypical}%` : `${diffVsTypical}%`} vs. typical ${dayShort} (${currentSlot.typical}%)`}
-                </span>
-              </div>
-
-              {/* 2. In X Hours Forecast */}
-              <div className="flex flex-col justify-between space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardContent className="min-w-0 space-y-7 md:space-y-12">
+            {/* Hero KPI Section */}
+            <div className="space-y-4 lg:space-y-0">
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-12">
+                {/* 1. Live Now */}
+                <div className="flex min-w-0 flex-col justify-between space-y-1 md:space-y-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    In +{horizonHours}h ({String(targetHour).padStart(2, '0')}:00
-                    {isTomorrow ? ' +1d' : ''})
+                    Now ({String(currentSlot.hour).padStart(2, '0')}:00)
                   </span>
-                  <div className="flex items-center gap-1">
-                    {HORIZONS.map((h) => (
-                      <button
-                        key={h}
-                        type="button"
-                        onClick={() => setHorizonHours(h)}
-                        className={cn(
-                          'rounded px-2.5 py-1 text-xs font-bold tabular-nums transition-colors',
-                          horizonHours === h
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-secondary text-foreground/80 hover:text-foreground'
-                        )}
-                      >
-                        +{h}h
-                      </button>
-                    ))}
+                  <div
+                    className={cn(
+                      'text-4xl font-black tracking-tight tabular-nums sm:text-5xl md:text-6xl',
+                      currentLvl.textClass
+                    )}
+                  >
+                    {currentSlot.percentage}%
+                  </div>
+                  <span className="truncate text-xs font-medium text-muted-foreground sm:text-sm">
+                    {Math.abs(diffVsTypical) <= 3
+                      ? `Typical ${dayShort}: ${currentSlot.typical}%`
+                      : `${diffVsTypical > 0 ? `+${diffVsTypical}%` : `${diffVsTypical}%`} vs. ${dayShort} (${currentSlot.typical}%)`}
+                  </span>
+                </div>
+
+                {/* 2. In X Hours Forecast */}
+                <div className="flex min-w-0 flex-col justify-between space-y-1 md:space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      In +{horizonHours}h ({String(targetHour).padStart(2, '0')}:00)
+                    </span>
+                    {/* Desktop inline horizon buttons */}
+                    <div className="hidden items-center gap-1.5 lg:flex">
+                      {HORIZONS.map((h) => (
+                        <button
+                          key={h}
+                          type="button"
+                          onClick={() => setHorizonHours(h)}
+                          className={cn(
+                            'h-8 rounded px-3 text-xs font-bold tabular-nums transition-colors',
+                            horizonHours === h
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-secondary text-foreground/80 hover:text-foreground'
+                          )}
+                        >
+                          +{h}h
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-4xl font-black tracking-tight text-indigo-700 tabular-nums dark:text-indigo-400 sm:text-5xl md:text-6xl">
+                    {predictedPct}%
+                  </div>
+                  <span className="truncate text-xs font-medium text-muted-foreground sm:text-sm">
+                    {deltaFromNow >= 0 ? `+${deltaFromNow}%` : `${deltaFromNow}%`} vs. now &middot;
+                    Typ. {typicalAtTarget}%
+                  </span>
+                </div>
+
+                {/* 3. Best & Peak Windows */}
+                <div className="col-span-2 grid grid-cols-2 gap-4 border-t border-border pt-4 lg:col-span-1 lg:flex lg:flex-col lg:justify-between lg:gap-6 lg:border-t-0 lg:pt-0">
+                  <div className="min-w-0 space-y-0.5">
+                    <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Best Time
+                    </span>
+                    <span className="block truncate text-lg font-extrabold text-emerald-700 tabular-nums dark:text-emerald-400 md:text-2xl">
+                      {bestSlot
+                        ? `${String(bestSlot.hour).padStart(2, '0')}:00 (${bestSlot.percentage}%)`
+                        : '--'}
+                    </span>
+                  </div>
+                  <div className="min-w-0 space-y-0.5">
+                    <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Peak Rush
+                    </span>
+                    <span className="block truncate text-lg font-extrabold text-rose-700 tabular-nums dark:text-rose-400 md:text-2xl">
+                      {peakSlot
+                        ? `${String(peakSlot.hour).padStart(2, '0')}:00 (${peakSlot.percentage}%)`
+                        : '--'}
+                    </span>
                   </div>
                 </div>
-                <div className="text-6xl font-black tracking-tight text-indigo-700 tabular-nums dark:text-indigo-400">
-                  {predictedPct}%
-                </div>
-                <span className="text-sm font-medium text-muted-foreground">
-                  {deltaFromNow >= 0 ? `+${deltaFromNow}%` : `${deltaFromNow}%`} vs. now &middot;
-                  Typical {SHORT_DAYS[targetDow]}: {typicalAtTarget}%
-                </span>
               </div>
 
-              {/* 3. Best & Peak Windows */}
-              <div className="flex flex-col justify-between gap-6">
-                <div className="space-y-1">
-                  <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Best Time Today
-                  </span>
-                  <span className="text-2xl font-extrabold text-emerald-700 tabular-nums dark:text-emerald-400">
-                    {bestSlot
-                      ? `${String(bestSlot.hour).padStart(2, '0')}:00–${String(bestSlot.hour + 1).padStart(2, '0')}:00 (${bestSlot.percentage}%)`
-                      : '--'}
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Peak Rush
-                  </span>
-                  <span className="text-2xl font-extrabold text-rose-700 tabular-nums dark:text-rose-400">
-                    {peakSlot
-                      ? `${String(peakSlot.hour).padStart(2, '0')}:00–${String(peakSlot.hour + 1).padStart(2, '0')}:00 (${peakSlot.percentage}%)`
-                      : '--'}
-                  </span>
-                </div>
+              {/* Mobile / Touch Full-Width Horizon Selector Bar (< lg) */}
+              <div className="grid grid-cols-5 gap-2 pt-1 lg:hidden">
+                {HORIZONS.map((h) => (
+                  <button
+                    key={h}
+                    type="button"
+                    onClick={() => setHorizonHours(h)}
+                    className={cn(
+                      'flex h-11 min-h-[44px] touch-manipulation items-center justify-center rounded-md border text-sm font-bold tabular-nums transition-colors',
+                      horizonHours === h
+                        ? 'border-foreground bg-primary text-primary-foreground'
+                        : 'border-border bg-secondary text-foreground/90'
+                    )}
+                  >
+                    +{h}h
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Enlarged 24-Hour Interactive Bar Chart */}
-            <div className="space-y-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* CHART SECTION */}
+            <div className="min-w-0 space-y-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <h3 className="text-base font-bold tracking-tight">{chartTitle}</h3>
-                <div className="flex flex-wrap items-center gap-5 text-xs font-semibold text-foreground/85">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-semibold text-foreground/85 sm:gap-5">
                   <span className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-sm bg-emerald-600 dark:bg-emerald-500" /> &lt;45%
                   </span>
@@ -479,8 +564,122 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="relative w-full">
-                {/* Periodic C2 Cubic B-Spline for Typical Curve (extends edge-to-edge 0..2400) */}
+              {/* MOBILE / TABLET GRAPH (< lg): Vertical Timeline of Horizontal Bars (06:00–23:00) + Vertical Typical Curve */}
+              <div className="grid w-full min-w-0 grid-cols-[44px_minmax(0,1fr)_42px] items-stretch gap-2.5 lg:hidden">
+                {/* Left Column: Hours */}
+                <div className="flex flex-col">
+                  {mobileHours.map((slot) => {
+                    const isTarget =
+                      selectedDayTab === 'today' && !isTomorrow && slot.hour === targetHour;
+                    return (
+                      <button
+                        key={slot.hour}
+                        type="button"
+                        onClick={() => {
+                          if (selectedDayTab === 'today' && slot.hour > todayModel.activeHour) {
+                            setHorizonHours(slot.hour - todayModel.activeHour);
+                          }
+                        }}
+                        className={cn(
+                          'flex h-9 min-h-[36px] touch-manipulation items-center text-left font-mono text-xs font-medium tabular-nums text-foreground/85 sm:h-10 sm:text-sm',
+                          slot.isCurrent && 'font-black text-foreground',
+                          isTarget && 'font-black text-indigo-700 dark:text-indigo-300'
+                        )}
+                      >
+                        {String(slot.hour).padStart(2, '0')}:00
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Middle Column: Horizontal Bars + Overlaid Smooth Vertical Typical Curve */}
+                <div className="relative flex min-w-0 flex-col overflow-hidden">
+                  <svg
+                    viewBox="0 0 300 1800"
+                    preserveAspectRatio="none"
+                    className="pointer-events-none absolute inset-0 z-20 h-full w-full overflow-hidden"
+                  >
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      className="text-foreground"
+                      d={buildSmoothVerticalCurvePath(
+                        mobileHours.map((slot) => slot.typical),
+                        300,
+                        1800
+                      )}
+                    />
+                  </svg>
+
+                  {mobileHours.map((slot) => {
+                    const lvl = getLevelInfo(slot.percentage);
+                    const isTarget =
+                      selectedDayTab === 'today' && !isTomorrow && slot.hour === targetHour;
+                    const widthPct = Math.max(3, Math.min(100, slot.percentage));
+
+                    return (
+                      <button
+                        key={slot.hour}
+                        type="button"
+                        onClick={() => {
+                          if (selectedDayTab === 'today' && slot.hour > todayModel.activeHour) {
+                            setHorizonHours(slot.hour - todayModel.activeHour);
+                          }
+                        }}
+                        aria-label={`${String(slot.hour).padStart(2, '0')}:00 capacity ${slot.percentage}%`}
+                        className="flex h-9 min-h-[36px] w-full min-w-0 touch-manipulation items-center py-1.5 sm:h-10"
+                      >
+                        <div className="relative flex h-full w-full items-center bg-secondary">
+                          <div
+                            className={cn(
+                              'h-full',
+                              slot.isForecast
+                                ? 'bg-indigo-600/80 dark:bg-indigo-500/80'
+                                : lvl.barClass,
+                              slot.isCurrent && 'outline outline-2 outline-foreground',
+                              isTarget && 'outline outline-2 outline-primary'
+                            )}
+                            style={{ width: `${widthPct}%` }}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Right Column: Percentages */}
+                <div className="flex flex-col">
+                  {mobileHours.map((slot) => {
+                    const isTarget =
+                      selectedDayTab === 'today' && !isTomorrow && slot.hour === targetHour;
+                    return (
+                      <button
+                        key={slot.hour}
+                        type="button"
+                        onClick={() => {
+                          if (selectedDayTab === 'today' && slot.hour > todayModel.activeHour) {
+                            setHorizonHours(slot.hour - todayModel.activeHour);
+                          }
+                        }}
+                        className={cn(
+                          'flex h-9 min-h-[36px] touch-manipulation items-center justify-end font-mono text-xs font-semibold tabular-nums text-foreground/85 sm:h-10 sm:text-sm',
+                          slot.isCurrent && 'font-black text-foreground',
+                          isTarget && 'font-black text-indigo-700 dark:text-indigo-300'
+                        )}
+                      >
+                        {slot.percentage}%
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* DESKTOP CHART (lg+): Full 24-Hour Horizontal Bar Chart with Smooth Typical Curve */}
+              <div className="relative hidden w-full min-w-0 lg:block">
                 <svg
                   viewBox="0 0 2400 300"
                   preserveAspectRatio="none"
@@ -557,27 +756,11 @@ export default function App() {
           </CardContent>
         </Card>
 
-        {/* Map & Studio Finder Card */}
-        <Card className="p-2 md:p-4">
-          <CardHeader className="pb-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <NativeSelect
-                value={selectedCity}
-                onChange={(e) => {
-                  setSelectedCity(e.target.value);
-                  setFitBoundsTrigger((n) => n + 1);
-                }}
-                aria-label="Select city"
-              >
-                <option value="All">All Cities ({studios.length})</option>
-                {citiesWithCounts.map(({ city, count }) => (
-                  <option key={city} value={city}>
-                    {city} ({count})
-                  </option>
-                ))}
-              </NativeSelect>
-
-              <div className="min-w-[220px] flex-1">
+        {/* Studio Finder Card (Map disabled on mobile viewports < lg) */}
+        <Card className="min-w-0 overflow-hidden p-0 md:p-4">
+          <CardHeader className="min-w-0 pb-4 md:pb-6">
+            <div className="flex min-w-0 flex-col gap-2.5 lg:flex-row lg:flex-wrap lg:items-center lg:gap-3">
+              <div className="w-full min-w-0 lg:order-2 lg:min-w-[200px] lg:flex-1">
                 <Input
                   type="search"
                   placeholder="Search studio, street, or ZIP..."
@@ -589,32 +772,56 @@ export default function App() {
                 />
               </div>
 
-              <NativeSelect
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                aria-label="Sort studios"
-              >
-                <option value="city">City / Name</option>
-                <option value="lowest-now">Quietest Now</option>
-                <option value="lowest-2h">Quietest +2h</option>
-                <option value="highest-now">Busiest Now</option>
-              </NativeSelect>
+              <div className="grid w-full min-w-0 grid-cols-1 gap-2.5 sm:grid-cols-2 lg:order-1 lg:flex lg:w-auto">
+                <NativeSelect
+                  value={selectedCity}
+                  onChange={(e) => {
+                    setSelectedCity(e.target.value);
+                    setFitBoundsTrigger((n) => n + 1);
+                  }}
+                  aria-label="Select city"
+                  className="lg:w-48"
+                >
+                  <option value="All">All Cities ({studios.length})</option>
+                  {citiesWithCounts.map(({ city, count }) => (
+                    <option key={city} value={city}>
+                      {city} ({count})
+                    </option>
+                  ))}
+                </NativeSelect>
+
+                <NativeSelect
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  aria-label="Sort studios"
+                  className="lg:w-40"
+                >
+                  <option value="city">City / Name</option>
+                  <option value="lowest-now">Quietest Now</option>
+                  <option value="lowest-2h">Quietest +2h</option>
+                  <option value="highest-now">Busiest Now</option>
+                </NativeSelect>
+              </div>
             </div>
           </CardHeader>
 
-          <CardContent>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
-              <GymMap
-                studios={filteredStudios}
-                selectedStudioId={selectedStudioId}
-                history={history}
-                liveCache={liveCache}
-                onSelectStudio={handleSelectStudio}
-                fitBoundsTrigger={fitBoundsTrigger}
-                theme={theme}
-              />
+          <CardContent className="min-w-0">
+            <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
+              {isDesktop && (
+                <div className="hidden min-w-0 lg:block">
+                  <GymMap
+                    studios={filteredStudios}
+                    selectedStudioId={selectedStudioId}
+                    history={history}
+                    liveCache={liveCache}
+                    onSelectStudio={handleSelectStudio}
+                    fitBoundsTrigger={fitBoundsTrigger}
+                    theme={theme}
+                  />
+                </div>
+              )}
 
-              <div className="flex h-[460px] flex-col gap-1.5 overflow-y-auto pr-1">
+              <div className="flex h-[380px] w-full min-w-0 flex-col gap-2 overflow-y-auto pr-1 sm:h-[460px]">
                 {filteredStudios.map((s) => {
                   const pct = getStudioCurrentPct(s.id, history, liveCache);
                   const lvl = pct !== null ? getLevelInfo(pct) : null;
@@ -630,13 +837,13 @@ export default function App() {
                       type="button"
                       onClick={() => handleSelectStudio(s.id)}
                       className={cn(
-                        'flex items-center justify-between gap-3 rounded-md border px-4 py-2.5 text-left transition-colors',
+                        'flex min-h-[54px] w-full min-w-0 touch-manipulation items-center justify-between gap-3 rounded-md border px-4 py-3 text-left transition-colors lg:min-h-0 lg:py-2.5',
                         isSelected
                           ? 'border-foreground bg-primary text-primary-foreground'
                           : 'border-border bg-card hover:bg-secondary'
                       )}
                     >
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-bold">{shortName}</div>
                         <div
                           className={cn(
@@ -667,13 +874,81 @@ export default function App() {
           </CardContent>
         </Card>
 
-        {/* Weekly Overview Heatmap */}
-        <Card className="p-2 md:p-4">
-          <CardHeader className="pb-5">
-            <CardTitle className="text-lg">Weekly Overview</CardTitle>
+        {/* Weekly Overview Card */}
+        <Card className="min-w-0 overflow-hidden p-0 md:p-4">
+          <CardHeader className="min-w-0 pb-4 md:pb-5">
+            <CardTitle className="text-base sm:text-lg">Weekly Overview</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid w-full grid-cols-[56px_repeat(18,minmax(0,1fr))] gap-1.5 overflow-hidden">
+          <CardContent className="min-w-0">
+            {/* MOBILE / TABLET WEEKLY VIEW (< lg): Compact 7-Day Time-of-Day Breakdown */}
+            <div className="min-w-0 space-y-2 lg:hidden">
+              <div className="grid grid-cols-[56px_repeat(3,minmax(0,1fr))] gap-2 px-0.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <span>Day</span>
+                <span className="text-center">06–12h</span>
+                <span className="text-center">12–17h</span>
+                <span className="text-center">17–22h</span>
+              </div>
+              {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
+                const isToday = dow === todayModel.dayOfWeek;
+                const liveObserved = todayModel.hours.map((h) =>
+                  h.isForecast ? null : h.percentage
+                );
+                const curve = getStudioWeekdayCurve(
+                  activeStudio.id,
+                  dow,
+                  history,
+                  liveObserved,
+                  todayModel.dayOfWeek
+                );
+                const avgRange = (start, end) => {
+                  const slice = curve.slice(start, end);
+                  return Math.round(slice.reduce((a, b) => a + b, 0) / slice.length);
+                };
+                const morningPct = avgRange(6, 12);
+                const afternoonPct = avgRange(12, 17);
+                const eveningPct = avgRange(17, 22);
+
+                return (
+                  <div
+                    key={dow}
+                    onClick={() => {
+                      setSelectedDayTab(String(dow));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="grid min-w-0 cursor-pointer touch-manipulation grid-cols-[56px_repeat(3,minmax(0,1fr))] items-center gap-2"
+                  >
+                    <button
+                      type="button"
+                      className={cn(
+                        'flex h-11 min-h-[44px] touch-manipulation items-center justify-center rounded-md border text-sm font-bold',
+                        isToday
+                          ? 'border-foreground bg-primary text-primary-foreground'
+                          : 'border-border bg-secondary text-foreground'
+                      )}
+                    >
+                      {SHORT_DAYS[dow]}
+                    </button>
+                    {[morningPct, afternoonPct, eveningPct].map((pct, idx) => {
+                      const lvl = getLevelInfo(pct);
+                      return (
+                        <div
+                          key={idx}
+                          className={cn(
+                            'flex h-11 min-h-[44px] min-w-0 items-center justify-center rounded-md font-mono text-sm font-bold tabular-nums',
+                            lvl.hmClass
+                          )}
+                        >
+                          {pct}%
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DESKTOP WEEKLY VIEW (lg+): Full 18-Hour Heatmap Matrix */}
+            <div className="hidden w-full min-w-0 grid-cols-[56px_repeat(18,minmax(0,1fr))] gap-1.5 overflow-hidden lg:grid">
               <div className="py-1.5 text-center font-mono text-xs font-bold text-foreground/80" />
               {Array.from({ length: 18 }, (_, i) => i + 6).map((h) => (
                 <div

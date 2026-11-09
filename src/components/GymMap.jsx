@@ -160,7 +160,7 @@ export function GymMap({
   }, [selectedStudioId]);
 
   return (
-    <div className="relative h-[460px] w-full overflow-hidden rounded-xl border border-border bg-secondary">
+    <div className="relative h-[300px] w-full overflow-hidden rounded-lg border border-border bg-secondary sm:h-[460px]">
       <div ref={containerRef} className="h-full w-full" />
     </div>
   );
