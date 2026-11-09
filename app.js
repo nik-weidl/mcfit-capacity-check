@@ -37,6 +37,10 @@ const state = {
   markerById: {},
 };
 
+function formatStudioName(name) {
+  return (name || '').replace(/^KLUB\s+/i, '').replace(/^McFIT\s+/i, '').trim();
+}
+
 function saveFavorites() {
   localStorage.setItem('mcfit_favorites', JSON.stringify([...state.favorites]));
   const favCountEl = document.getElementById('fav-count');
@@ -448,11 +452,11 @@ function renderMapMarkers({ fitBounds = false } = {}) {
 
     marker.bindPopup(`
       <div>
-        <div class="popup-title">${s.name}</div>
+        <div class="popup-title">${formatStudioName(s.name)}</div>
         <div class="popup-addr">${s.street}, ${s.zipCode} ${s.city}</div>
         <div class="popup-metrics">
-          <span class="level-badge ${lvl.cls}">Now: ${pct !== null ? `${pct}%` : '--%'}</span>
-          <span style="color: var(--forecast-blue); font-weight: 700;">In +2h: ~${in2hPct}%</span>
+          <span class="level-badge ${lvl.cls}">${pct !== null ? `${pct}%` : '--%'}</span>
+          <span style="color: var(--forecast-blue); font-weight: 700;">+2h: ~${in2hPct}%</span>
         </div>
       </div>
     `);
@@ -526,12 +530,15 @@ function renderStudioGrid() {
         const lvl = getLevelInfo(pct);
         badgeHtml = `<span class="chip-badge ${lvl.cls}">${pct}%</span>`;
       }
-      const shortName = s.name.replace(/^KLUB\s+/i, '').replace(/^McFIT\s+/i, '');
+      const shortName = formatStudioName(s.name);
+      const subText = shortName.toLowerCase().includes(s.city.toLowerCase())
+        ? s.street
+        : `${s.street} (${s.city})`;
       return `
         <button class="studio-chip ${activeCls}" data-studio-id="${s.id}">
           <div class="chip-info">
             <div class="chip-name">${isFav ? '&#9733; ' : ''}${shortName}</div>
-            <div class="chip-sub">${s.city} &bull; ${s.street}</div>
+            <div class="chip-sub">${subText}</div>
           </div>
           ${badgeHtml}
         </button>
@@ -552,7 +559,7 @@ function renderDashboard() {
     state.studios.find((s) => s.id === state.selectedStudioId) || state.studios[0];
   if (!studio) return;
 
-  document.getElementById('active-studio-name').textContent = studio.name;
+  document.getElementById('active-studio-name').textContent = formatStudioName(studio.name);
   document.getElementById('active-studio-address').textContent =
     `${studio.street}, ${studio.zipCode} ${studio.city}`;
 

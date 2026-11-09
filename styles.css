@@ -180,8 +180,8 @@ body {
   display: flex;
   gap: 0.6rem;
   flex: 1;
-  min-width: 280px;
-  justify-content: flex-end;
+  width: 100%;
+  align-items: center;
   flex-wrap: wrap;
 }
 
@@ -203,7 +203,6 @@ body {
 .search-box {
   flex: 1;
   min-width: 200px;
-  max-width: 310px;
 }
 
 .search-box input {
@@ -796,23 +795,23 @@ body {
 /* 24-Hour Bars */
 .hourly-chart {
   display: grid;
-  grid-template-columns: repeat(24, minmax(26px, 1fr));
-  gap: 0.35rem;
-  height: 230px;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 0.25rem;
+  width: 100%;
   align-items: end;
-  padding-top: 1.6rem;
+  padding-top: 0.5rem;
   border-bottom: 1px solid var(--border);
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .hour-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100%;
   justify-content: flex-end;
   position: relative;
   cursor: pointer;
+  min-width: 0;
 }
 
 .hour-col:hover .hour-bar {
@@ -820,10 +819,12 @@ body {
 }
 
 .hour-val {
-  font-size: 0.69rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--text-muted);
   margin-bottom: 0.25rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .hour-col.is-current .hour-val {
@@ -910,15 +911,16 @@ body {
 
 /* Weekly Heatmap */
 .heatmap-wrapper {
-  overflow-x: auto;
+  overflow: hidden;
   margin-top: 0.85rem;
+  width: 100%;
 }
 
 .weekly-heatmap {
   display: grid;
-  grid-template-columns: 90px repeat(18, minmax(36px, 1fr));
-  gap: 0.3rem;
-  min-width: 760px;
+  grid-template-columns: 56px repeat(18, minmax(0, 1fr));
+  gap: 0.25rem;
+  width: 100%;
 }
 
 .hm-cell {
