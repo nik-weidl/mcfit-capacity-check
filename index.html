@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>McFIT Capacity Check</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <span class="brand-badge">McFIT</span>
+        <h1>Capacity Check</h1>
+      </div>
+      <div class="header-actions">
+        <button id="locate-me-btn" class="btn-secondary" title="Find nearest studio">
+          &#x1F4CD; Near Me
+        </button>
+        <button id="refresh-btn" class="btn-secondary" title="Refresh live data">
+          &#x21bb; Refresh
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container main-content">
+    <!-- Interactive Map + Studio Finder -->
+    <section class="card finder-card">
+      <div class="picker-top-row">
+        <div class="filter-controls">
+          <button class="city-tab" id="fav-filter-btn" data-city="Favorites">
+            &#9733; Favorites <span id="fav-count">(0)</span>
+          </button>
+          <select id="city-select" class="city-select" aria-label="Select city">
+            <option value="All">All Cities</option>
+          </select>
+          <div class="search-box">
+            <input
+              type="search"
+              id="studio-search"
+              placeholder="Search studio, street, or ZIP..."
+              autocomplete="off"
+            />
+          </div>
+          <select id="studio-sort" class="city-select" aria-label="Sort studios">
+            <option value="city">Sort: City / Name</option>
+            <option value="lowest-now">Quietest Now</option>
+            <option value="lowest-2h">Quietest in +2h</option>
+            <option value="highest-now">Busiest Now</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="map-and-list">
+        <div class="map-container-wrap">
+          <div id="gym-map" class="gym-map" aria-label="Studio map"></div>
+        </div>
+
+        <div class="studio-list-panel">
+          <div id="studio-grid" class="studio-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Selected Studio Header -->
+    <section class="selected-studio-banner">
+      <div class="selected-studio-info">
+        <div class="selected-title-row">
+          <h2 id="active-studio-name">Loading&hellip;</h2>
+          <button id="fav-toggle-btn" class="fav-btn" title="Pin studio">&#9734; Pin</button>
+          <button id="center-map-btn" class="fav-btn" title="Center on map">&#x1F5FA; Map</button>
+        </div>
+        <p id="active-studio-address" class="studio-address">&mdash;</p>
+      </div>
+      <div class="data-source-meta">
+        <span id="last-updated-text" class="meta-subtext"></span>
+      </div>
+    </section>
+
+    <!-- Top KPI Row -->
+    <section class="kpi-grid">
+      <!-- 1. Now -->
+      <div class="card kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">NOW</span>
+          <span id="live-level-badge" class="level-badge">&mdash;</span>
+        </div>
+        <div class="kpi-main">
+          <span id="live-percentage" class="kpi-value">--%</span>
+          <span id="live-hour-label" class="kpi-sublabel">--:00</span>
+        </div>
+        <div id="live-vs-typical" class="kpi-footer">&mdash;</div>
+      </div>
+
+      <!-- 2. Forecast -->
+      <div class="card kpi-card predictor-card">
+        <div class="kpi-header">
+          <span class="kpi-label">FORECAST</span>
+          <div class="horizon-pills" id="horizon-pills">
+            <button class="horizon-pill" data-hours="1">+1h</button>
+            <button class="horizon-pill active" data-hours="2">+2h</button>
+            <button class="horizon-pill" data-hours="3">+3h</button>
+            <button class="horizon-pill" data-hours="4">+4h</button>
+            <button class="horizon-pill" data-hours="6">+6h</button>
+          </div>
+        </div>
+        <div class="kpi-main">
+          <span id="predicted-percentage" class="kpi-value">--%</span>
+          <div class="predicted-meta">
+            <span id="predicted-time-label" class="kpi-sublabel">--:00</span>
+            <span id="predicted-trend-badge" class="trend-badge">&mdash;</span>
+          </div>
+        </div>
+        <div id="predicted-explanation" class="kpi-footer">&mdash;</div>
+      </div>
+
+      <!-- 3. Best Window & Peak -->
+      <div class="card kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-label">TODAY&rsquo;S WINDOWS</span>
+        </div>
+        <div class="planner-rows">
+          <div class="planner-item">
+            <span class="planner-tag good">Best</span>
+            <strong id="best-window-text">--:00 &ndash; --:00</strong>
+          </div>
+          <div class="planner-item">
+            <span class="planner-tag warn">Peak</span>
+            <strong id="peak-window-text">--:00 &ndash; --:00</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Hourly Chart -->
+    <section class="card chart-card">
+      <div class="chart-header">
+        <h3 id="chart-title">Hourly Capacity</h3>
+        <div class="day-selector" id="day-selector">
+          <button class="day-btn active" data-day="today">Today</button>
+          <button class="day-btn" data-day="1">Mon</button>
+          <button class="day-btn" data-day="2">Tue</button>
+          <button class="day-btn" data-day="3">Wed</button>
+          <button class="day-btn" data-day="4">Thu</button>
+          <button class="day-btn" data-day="5">Fri</button>
+          <button class="day-btn" data-day="6">Sat</button>
+          <button class="day-btn" data-day="0">Sun</button>
+        </div>
+      </div>
+
+      <div class="chart-legend">
+        <span class="legend-item"><span class="swatch swatch-low"></span> &lt;45%</span>
+        <span class="legend-item"><span class="swatch swatch-normal"></span> 45&ndash;74%</span>
+        <span class="legend-item"><span class="swatch swatch-high"></span> &ge;75%</span>
+        <span class="legend-item"><span class="swatch swatch-forecast"></span> Forecast</span>
+        <span class="legend-item"><span class="swatch-dot"></span> Typical</span>
+      </div>
+
+      <div id="hourly-chart" class="hourly-chart" aria-label="Hourly capacity chart"></div>
+    </section>
+
+    <!-- Weekly Heatmap -->
+    <section class="card heatmap-card">
+      <div class="heatmap-header">
+        <h3>Weekly Overview</h3>
+      </div>
+      <div class="heatmap-wrapper">
+        <div id="weekly-heatmap" class="weekly-heatmap"></div>
+      </div>
+    </section>
+  </main>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="app.js" type="module"></script>
+</body>
+</html>

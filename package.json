@@ -1,0 +1,11 @@
+{
+  "name": "mcfit-capacity-check",
+  "version": "1.0.0",
+  "description": "Live McFIT studio capacity tracker & smart predictor for Munich, Berlin, and all 245 studios",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "collect": "node scripts/fetch-capacity.mjs"
+  }
+}
+
