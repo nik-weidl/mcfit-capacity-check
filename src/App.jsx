@@ -375,15 +375,6 @@ export default function App() {
     ? tomorrowCurve[targetHour]
     : todayModel.typicalCurve[targetHour];
 
-  const workoutHours = todayModel.hours.filter(
-    (h) => h.hour >= Math.max(6, todayModel.activeHour) && h.hour <= 22
-  );
-  const pool = workoutHours.length > 0 ? workoutHours : todayModel.hours.slice(6, 23);
-  const bestSlot = [...pool].sort((a, b) => a.percentage - b.percentage)[0];
-  const peakSlot = [...todayModel.hours.slice(6, 23)].sort(
-    (a, b) => b.percentage - a.percentage
-  )[0];
-
   const displayHours =
     selectedDayTab === 'today'
       ? todayModel.hours
@@ -393,6 +384,15 @@ export default function App() {
           history,
           todayModel
         );
+
+  const activeDayPool = displayHours.slice(6, 23);
+  const hasValidDayData = activeDayPool.some((h) => h.percentage > 0);
+  const bestSlot = hasValidDayData
+    ? [...activeDayPool].sort((a, b) => a.percentage - b.percentage || a.hour - b.hour)[0]
+    : null;
+  const peakSlot = hasValidDayData
+    ? [...activeDayPool].sort((a, b) => b.percentage - a.percentage || a.hour - b.hour)[0]
+    : null;
 
   // Active gym hours (06:00 to 23:00) for the mobile vertical horizontal-bar timeline
   const mobileHours = displayHours.slice(6, 24);
@@ -463,89 +463,63 @@ export default function App() {
 
           <CardContent className="min-w-0 space-y-7 md:space-y-12">
             {/* Hero KPI Section */}
-            <div className="space-y-4 lg:space-y-0">
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-12">
-                {/* 1. Live Now */}
-                <div className="flex min-w-0 flex-col justify-between space-y-1 md:space-y-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Now ({String(currentSlot.hour).padStart(2, '0')}:00)
-                  </span>
-                  <div
-                    className={cn(
-                      'text-4xl font-black tracking-tight tabular-nums sm:text-5xl md:text-6xl',
-                      currentLvl.textClass
-                    )}
-                  >
-                    {currentSlot.percentage}%
-                  </div>
-                  <span className="truncate text-xs font-medium text-muted-foreground sm:text-sm">
-                    {Math.abs(diffVsTypical) <= 3
-                      ? `Typical ${dayShort}: ${currentSlot.typical}%`
-                      : `${diffVsTypical > 0 ? `+${diffVsTypical}%` : `${diffVsTypical}%`} vs. ${dayShort} (${currentSlot.typical}%)`}
-                  </span>
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-8">
+              {/* 1. Live Now */}
+              <div className="flex min-w-0 flex-col justify-between space-y-1 md:space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Now ({String(currentSlot.hour).padStart(2, '0')}:00)
+                </span>
+                <div
+                  className={cn(
+                    'text-4xl font-black tracking-tight tabular-nums sm:text-5xl',
+                    currentLvl.textClass
+                  )}
+                >
+                  {currentSlot.percentage}%
                 </div>
-
-                {/* 2. In X Hours Forecast */}
-                <div className="flex min-w-0 flex-col justify-between space-y-1 md:space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      In +{horizonHours}h ({String(targetHour).padStart(2, '0')}:00)
-                    </span>
-                    {/* Desktop inline horizon buttons */}
-                    <div className="hidden items-center gap-1.5 lg:flex">
-                      {HORIZONS.map((h) => (
-                        <button
-                          key={h}
-                          type="button"
-                          onClick={() => setHorizonHours(h)}
-                          className={cn(
-                            'h-8 rounded px-3 text-xs font-bold tabular-nums transition-colors',
-                            horizonHours === h
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary text-foreground/80 hover:text-foreground'
-                          )}
-                        >
-                          +{h}h
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="text-4xl font-black tracking-tight text-indigo-700 tabular-nums dark:text-indigo-400 sm:text-5xl md:text-6xl">
-                    {predictedPct}%
-                  </div>
-                  <span className="truncate text-xs font-medium text-muted-foreground sm:text-sm">
-                    {deltaFromNow >= 0 ? `+${deltaFromNow}%` : `${deltaFromNow}%`} vs. now &middot;
-                    Typ. {typicalAtTarget}%
-                  </span>
-                </div>
-
-                {/* 3. Best & Peak Windows */}
-                <div className="col-span-2 grid grid-cols-2 gap-4 border-t border-border pt-4 lg:col-span-1 lg:flex lg:flex-col lg:justify-between lg:gap-6 lg:border-t-0 lg:pt-0">
-                  <div className="min-w-0 space-y-0.5">
-                    <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Best Time
-                    </span>
-                    <span className="block truncate text-lg font-extrabold text-emerald-700 tabular-nums dark:text-emerald-400 md:text-2xl">
-                      {bestSlot
-                        ? `${String(bestSlot.hour).padStart(2, '0')}:00 (${bestSlot.percentage}%)`
-                        : '--'}
-                    </span>
-                  </div>
-                  <div className="min-w-0 space-y-0.5">
-                    <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      Peak Rush
-                    </span>
-                    <span className="block truncate text-lg font-extrabold text-rose-700 tabular-nums dark:text-rose-400 md:text-2xl">
-                      {peakSlot
-                        ? `${String(peakSlot.hour).padStart(2, '0')}:00 (${peakSlot.percentage}%)`
-                        : '--'}
-                    </span>
-                  </div>
-                </div>
+                <span className="truncate text-xs font-medium text-muted-foreground sm:text-sm">
+                  {Math.abs(diffVsTypical) <= 3
+                    ? `Typical ${dayShort}: ${currentSlot.typical}%`
+                    : `${diffVsTypical > 0 ? `+${diffVsTypical}%` : `${diffVsTypical}%`} vs. ${dayShort} (${currentSlot.typical}%)`}
+                </span>
               </div>
 
-              {/* Mobile / Touch Full-Width Horizon Selector Bar (< lg) */}
-              <div className="grid grid-cols-5 gap-2 pt-1 lg:hidden">
+              {/* 2. In X Hours Forecast */}
+              <div className="flex min-w-0 flex-col justify-between space-y-1 md:space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    In +{horizonHours}h ({String(targetHour).padStart(2, '0')}:00)
+                  </span>
+                  {/* Desktop inline horizon buttons */}
+                  <div className="hidden items-center gap-1 lg:flex">
+                    {HORIZONS.map((h) => (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => setHorizonHours(h)}
+                        className={cn(
+                          'h-7 rounded px-2 text-xs font-bold tabular-nums transition-colors',
+                          horizonHours === h
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary text-foreground/80 hover:text-foreground'
+                        )}
+                      >
+                        +{h}h
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-4xl font-black tracking-tight text-indigo-700 tabular-nums dark:text-indigo-400 sm:text-5xl">
+                  {predictedPct}%
+                </div>
+                <span className="truncate text-xs font-medium text-muted-foreground sm:text-sm">
+                  {deltaFromNow >= 0 ? `+${deltaFromNow}%` : `${deltaFromNow}%`} vs. now &middot;
+                  Typ. {typicalAtTarget}%
+                </span>
+              </div>
+
+              {/* Mobile / Touch Full-Width Horizon Selector Bar (< lg) — directly below Now & In +Xh */}
+              <div className="col-span-2 grid grid-cols-5 gap-2 pt-1 lg:hidden">
                 {HORIZONS.map((h) => (
                   <button
                     key={h}
@@ -561,6 +535,32 @@ export default function App() {
                     +{h}h
                   </button>
                 ))}
+              </div>
+
+              {/* 3. Best Time (06:00–22:00 on selected day) */}
+              <div className="flex min-w-0 flex-col justify-between space-y-1 border-t border-border pt-4 md:space-y-2 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Best Time
+                </span>
+                <div className="text-4xl font-black tracking-tight text-emerald-700 tabular-nums dark:text-emerald-400 sm:text-5xl">
+                  {bestSlot ? `${String(bestSlot.hour).padStart(2, '0')}:00` : '--'}
+                </div>
+                <span className="truncate text-xs font-medium text-muted-foreground sm:text-sm">
+                  {bestSlot ? `${bestSlot.percentage}% capacity (06–22h)` : 'No data available'}
+                </span>
+              </div>
+
+              {/* 4. Peak Rush (06:00–22:00 on selected day) */}
+              <div className="flex min-w-0 flex-col justify-between space-y-1 border-t border-border pt-4 md:space-y-2 lg:border-t-0 lg:pt-0">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Peak Rush
+                </span>
+                <div className="text-4xl font-black tracking-tight text-rose-700 tabular-nums dark:text-rose-400 sm:text-5xl">
+                  {peakSlot ? `${String(peakSlot.hour).padStart(2, '0')}:00` : '--'}
+                </div>
+                <span className="truncate text-xs font-medium text-muted-foreground sm:text-sm">
+                  {peakSlot ? `${peakSlot.percentage}% capacity (06–22h)` : 'No data available'}
+                </span>
               </div>
             </div>
 

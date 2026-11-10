@@ -72,15 +72,19 @@ export function computeStudioScaleFactor(studioId, history, liveHoursArray, curr
   const studioHist = history?.studios?.[studioId]?.days || {};
   let observedSum = 0;
   let baseSum = 0;
+  let recordedCount = 0;
 
   for (const [dateStr, hours] of Object.entries(studioHist)) {
     const d = new Date(`${dateStr}T12:00:00Z`);
     const dow = Number.isNaN(d.getTime()) ? currentDow : d.getUTCDay();
     const baseProfile = BASE_WEEKDAY_PROFILES[dow] || BASE_WEEKDAY_PROFILES[1];
     hours.forEach((val, h) => {
-      if (typeof val === 'number' && val > 0 && h >= 7 && h <= 21) {
-        observedSum += val;
-        baseSum += baseProfile[h];
+      if (typeof val === 'number' && h >= 7 && h <= 21) {
+        recordedCount += 1;
+        if (val > 0) {
+          observedSum += val;
+          baseSum += baseProfile[h];
+        }
       }
     });
   }
@@ -88,13 +92,17 @@ export function computeStudioScaleFactor(studioId, history, liveHoursArray, curr
   if (Array.isArray(liveHoursArray)) {
     const baseProfile = BASE_WEEKDAY_PROFILES[currentDow] || BASE_WEEKDAY_PROFILES[1];
     liveHoursArray.forEach((val, h) => {
-      if (typeof val === 'number' && val > 0 && h >= 7 && h <= 21) {
-        observedSum += val;
-        baseSum += baseProfile[h];
+      if (typeof val === 'number' && h >= 7 && h <= 21) {
+        recordedCount += 1;
+        if (val > 0) {
+          observedSum += val;
+          baseSum += baseProfile[h];
+        }
       }
     });
   }
 
+  if (recordedCount > 5 && observedSum === 0) return 0;
   if (baseSum < 20) return 0.5;
   const rawRatio = observedSum / baseSum;
   return Math.max(0.15, Math.min(1.45, rawRatio));
@@ -121,7 +129,7 @@ export function getStudioWeekdayCurve(studioId, targetDow, history, liveHoursTod
   let dowBaseSum = 0;
   matchingPastDays.forEach((arr) => {
     arr.forEach((v, h) => {
-      if (typeof v === 'number' && v >= 0 && h >= 6 && h <= 22) {
+      if (typeof v === 'number' && v > 0 && h >= 6 && h <= 22) {
         dowObsSum += v;
         dowBaseSum += baseProfile[h];
       }
@@ -151,14 +159,6 @@ export function getStudioWeekdayCurve(studioId, targetDow, history, liveHoursTod
     if (count > 0) {
       // Use 100% of the actual recorded studio values when present
       return Math.min(100, Math.max(0, Math.round(weightedSum / weightTotal)));
-    }
-
-    if (
-      targetDow === currentDow &&
-      Array.isArray(liveHoursToday) &&
-      typeof liveHoursToday[hour] === 'number'
-    ) {
-      return liveHoursToday[hour];
     }
 
     return calibratedBase;
@@ -257,10 +257,10 @@ export function buildTodaySeriesAndPredictions(studioId, history, liveCache) {
       const hoursAhead = Math.max(1, h - activeHour);
       const decay = Math.max(0.25, Math.exp(-0.18 * (hoursAhead - 1)));
       const effectiveMultiplier = 1 + (clampedTrend - 1) * decay;
-      const predicted = Math.min(
-        100,
-        Math.max(2, Math.round(typicalCurve[h] * effectiveMultiplier))
-      );
+      const predicted =
+        typicalCurve[h] === 0
+          ? 0
+          : Math.min(100, Math.max(1, Math.round(typicalCurve[h] * effectiveMultiplier)));
       hours.push({
         hour: h,
         percentage: predicted,
