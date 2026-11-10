@@ -95,40 +95,114 @@ export function computeStudioScaleFactor(studioId, history, liveHoursArray, curr
     });
   }
 
-  if (baseSum < 30) return 1.0;
+  if (baseSum < 20) return 0.5;
   const rawRatio = observedSum / baseSum;
-  return Math.max(0.55, Math.min(1.45, rawRatio));
+  return Math.max(0.15, Math.min(1.45, rawRatio));
 }
 
 export function getStudioWeekdayCurve(studioId, targetDow, history, liveHoursToday, currentDow) {
-  const scale = computeStudioScaleFactor(studioId, history, liveHoursToday, currentDow);
+  const studioScale = computeStudioScaleFactor(studioId, history, liveHoursToday, currentDow);
   const baseProfile = BASE_WEEKDAY_PROFILES[targetDow] || BASE_WEEKDAY_PROFILES[1];
   const studioHist = history?.studios?.[studioId]?.days || {};
+  const { dateStr: todayDateStr } = getBerlinNow();
 
-  const matchingDays = [];
-  for (const [dateStr, hours] of Object.entries(studioHist)) {
-    const d = new Date(`${dateStr}T12:00:00Z`);
-    if (!Number.isNaN(d.getTime()) && d.getUTCDay() === targetDow && Array.isArray(hours)) {
-      matchingDays.push(hours);
-    }
-  }
+  // Sort matching past weekdays newest-first (so index 0 is the most recent recorded occurrence, e.g. yesterday)
+  const matchingPastDays = Object.entries(studioHist)
+    .filter(([dateStr, hours]) => {
+      if (dateStr === todayDateStr || !Array.isArray(hours)) return false;
+      const d = new Date(`${dateStr}T12:00:00Z`);
+      return !Number.isNaN(d.getTime()) && d.getUTCDay() === targetDow;
+    })
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([, hours]) => hours);
+
+  // Compute a weekday-specific scale factor if we have partial hours recorded for this weekday
+  let dowObsSum = 0;
+  let dowBaseSum = 0;
+  matchingPastDays.forEach((arr) => {
+    arr.forEach((v, h) => {
+      if (typeof v === 'number' && v >= 0 && h >= 6 && h <= 22) {
+        dowObsSum += v;
+        dowBaseSum += baseProfile[h];
+      }
+    });
+  });
+  const effectiveScale =
+    dowBaseSum >= 20 ? Math.max(0.12, Math.min(1.45, dowObsSum / dowBaseSum)) : studioScale;
 
   return baseProfile.map((baseVal, hour) => {
-    const calibratedBase = Math.min(100, Math.max(2, Math.round(baseVal * scale)));
-    const recordedVals = matchingDays
-      .map((arr) => arr[hour])
-      .filter((v) => typeof v === 'number' && v !== null);
+    const calibratedBase = Math.min(100, Math.max(0, Math.round(baseVal * effectiveScale)));
 
-    if (recordedVals.length === 0) {
-      return calibratedBase;
+    // Recency-weighted average of actual recorded values: most recent week gets weight 1.0, then 0.7, 0.49...
+    let weightedSum = 0;
+    let weightTotal = 0;
+    let count = 0;
+
+    matchingPastDays.forEach((arr, weeksAgoIdx) => {
+      const v = arr[hour];
+      if (typeof v === 'number' && v !== null) {
+        const w = Math.pow(0.7, weeksAgoIdx);
+        weightedSum += v * w;
+        weightTotal += w;
+        count += 1;
+      }
+    });
+
+    if (count > 0) {
+      // Use 100% of the actual recorded studio values when present
+      return Math.min(100, Math.max(0, Math.round(weightedSum / weightTotal)));
     }
 
-    const avgRecorded = recordedVals.reduce((a, b) => a + b, 0) / recordedVals.length;
-    const histWeight = Math.min(0.85, recordedVals.length * 0.35);
-    return Math.min(
-      100,
-      Math.max(1, Math.round(avgRecorded * histWeight + calibratedBase * (1 - histWeight)))
-    );
+    if (
+      targetDow === currentDow &&
+      Array.isArray(liveHoursToday) &&
+      typeof liveHoursToday[hour] === 'number'
+    ) {
+      return liveHoursToday[hour];
+    }
+
+    return calibratedBase;
+  });
+}
+
+export function buildWeekdaySeries(studioId, targetDow, history, todayModel) {
+  const liveObserved = todayModel.hours.map((h) => (h.isForecast ? null : h.percentage));
+  const curve = getStudioWeekdayCurve(
+    studioId,
+    targetDow,
+    history,
+    liveObserved,
+    todayModel.dayOfWeek
+  );
+
+  const studioHist = history?.studios?.[studioId]?.days || {};
+  const { dateStr: todayDateStr } = getBerlinNow();
+
+  // Find the most recent recorded day for this weekday
+  const latestMatch = Object.entries(studioHist)
+    .filter(([dateStr, hours]) => {
+      if (dateStr === todayDateStr || !Array.isArray(hours)) return false;
+      const d = new Date(`${dateStr}T12:00:00Z`);
+      return !Number.isNaN(d.getTime()) && d.getUTCDay() === targetDow;
+    })
+    .sort(([a], [b]) => b.localeCompare(a))[0];
+
+  const latestHours = latestMatch ? latestMatch[1] : null;
+
+  return curve.map((typicalPct, h) => {
+    const recordedVal =
+      latestHours && typeof latestHours[h] === 'number' ? latestHours[h] : null;
+    const isSameAsToday =
+      targetDow === todayModel.dayOfWeek && typeof liveObserved[h] === 'number';
+    const actualVal = recordedVal !== null ? recordedVal : isSameAsToday ? liveObserved[h] : null;
+
+    return {
+      hour: h,
+      percentage: actualVal !== null ? actualVal : typicalPct,
+      typical: typicalPct,
+      isCurrent: false,
+      isForecast: actualVal === null,
+    };
   });
 }
 

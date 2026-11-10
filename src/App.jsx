@@ -13,6 +13,7 @@ import {
   getLevelInfo,
   getBerlinNow,
   getStudioWeekdayCurve,
+  buildWeekdaySeries,
   buildTodaySeriesAndPredictions,
   getStudioCurrentPct,
 } from '@/lib/capacityModel';
@@ -386,19 +387,12 @@ export default function App() {
   const displayHours =
     selectedDayTab === 'today'
       ? todayModel.hours
-      : getStudioWeekdayCurve(
+      : buildWeekdaySeries(
           activeStudio.id,
           parseInt(selectedDayTab, 10),
           history,
-          todayModel.hours.map((h) => (h.isForecast ? null : h.percentage)),
-          todayModel.dayOfWeek
-        ).map((pct, h) => ({
-          hour: h,
-          percentage: pct,
-          typical: pct,
-          isCurrent: false,
-          isForecast: false,
-        }));
+          todayModel
+        );
 
   // Active gym hours (06:00 to 23:00) for the mobile vertical horizontal-bar timeline
   const mobileHours = displayHours.slice(6, 24);
