@@ -221,10 +221,14 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true;
+    const RAW_HISTORY_URL =
+      'https://raw.githubusercontent.com/nik-weidl/mcfit-capacity-check/main/public/data/history.json';
+
     Promise.allSettled([
-      fetch('./data/studios.json').then((r) => r.json()),
-      fetch('./data/history.json').then((r) => r.json()),
-    ]).then(([sRes, hRes]) => {
+      fetch('./data/studios.json', { cache: 'no-cache' }).then((r) => r.json()),
+      fetch('./data/history.json', { cache: 'no-cache' }).then((r) => r.json()),
+      fetch(RAW_HISTORY_URL, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)),
+    ]).then(([sRes, hLocalRes, hRemoteRes]) => {
       if (!mounted) return;
       if (sRes.status === 'fulfilled' && Array.isArray(sRes.value)) {
         setStudios(sRes.value);
@@ -232,8 +236,14 @@ export default function App() {
           setSelectedStudioId(sRes.value[0].id);
         }
       }
-      if (hRes.status === 'fulfilled' && hRes.value) {
-        setHistory(hRes.value);
+      const localHist = hLocalRes.status === 'fulfilled' ? hLocalRes.value : null;
+      const remoteHist = hRemoteRes.status === 'fulfilled' ? hRemoteRes.value : null;
+      if (localHist && remoteHist) {
+        const localTime = new Date(localHist.lastUpdated || 0).getTime();
+        const remoteTime = new Date(remoteHist.lastUpdated || 0).getTime();
+        setHistory(remoteTime > localTime ? remoteHist : localHist);
+      } else if (remoteHist || localHist) {
+        setHistory(remoteHist || localHist);
       }
     });
     return () => {

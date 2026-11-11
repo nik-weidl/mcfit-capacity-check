@@ -2,19 +2,30 @@ name: Collect McFIT Germany Capacity (All 175 Studios)
 
 on:
   schedule:
-    # Runs twice daily:
+    # Runs 3 times daily:
     # 1) 14:45 UTC (15:45 CET / 16:45 CEST) - Afternoon checkpoint
-    # 2) 21:50 UTC (22:50 CET / 23:50 CEST) - Late-night snapshot capturing the full 24h day before McFIT resets at midnight
+    # 2) 19:30 UTC (20:30 CET / 21:30 CEST) - Evening peak checkpoint
+    # 3) 21:45 UTC (22:45 CET / 23:45 CEST) - Late-night snapshot before McFIT resets at midnight
     - cron: '45 14 * * *'
-    - cron: '50 21 * * *'
+    - cron: '30 19 * * *'
+    - cron: '45 21 * * *'
   workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
 
 jobs:
-  collect:
+  collect-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,6 +34,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Fetch daily capacity for all German McFIT studios
         run: node scripts/fetch-capacity.mjs
@@ -39,3 +51,20 @@ jobs:
             git push
           fi
 
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static site with updated history
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

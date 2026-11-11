@@ -178,29 +178,34 @@ export function buildWeekdaySeries(studioId, targetDow, history, todayModel) {
   const studioHist = history?.studios?.[studioId]?.days || {};
   const { dateStr: todayDateStr } = getBerlinNow();
 
-  // Find the most recent recorded day for this weekday
-  const latestMatch = Object.entries(studioHist)
+  // Sort all recorded past days for this weekday newest-first
+  const matchingPastDays = Object.entries(studioHist)
     .filter(([dateStr, hours]) => {
       if (dateStr === todayDateStr || !Array.isArray(hours)) return false;
       const d = new Date(`${dateStr}T12:00:00Z`);
       return !Number.isNaN(d.getTime()) && d.getUTCDay() === targetDow;
     })
-    .sort(([a], [b]) => b.localeCompare(a))[0];
-
-  const latestHours = latestMatch ? latestMatch[1] : null;
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([, hours]) => hours);
 
   return curve.map((typicalPct, h) => {
-    const recordedVal =
-      latestHours && typeof latestHours[h] === 'number' ? latestHours[h] : null;
+    let recordedVal = null;
+    for (const dayArr of matchingPastDays) {
+      if (typeof dayArr[h] === 'number') {
+        recordedVal = dayArr[h];
+        break;
+      }
+    }
+
     const isSameAsToday =
       targetDow === todayModel.dayOfWeek && typeof liveObserved[h] === 'number';
-    const actualVal = recordedVal !== null ? recordedVal : isSameAsToday ? liveObserved[h] : null;
+    const actualVal = isSameAsToday ? liveObserved[h] : recordedVal;
 
     return {
       hour: h,
       percentage: actualVal !== null ? actualVal : typicalPct,
       typical: typicalPct,
-      isCurrent: false,
+      isCurrent: isSameAsToday && h === todayModel.activeHour,
       isForecast: actualVal === null,
     };
   });
