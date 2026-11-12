@@ -22,6 +22,9 @@ export function GymMap({
   const tileLayerRef = useRef(null);
   const markersLayerRef = useRef(null);
   const markerByIdRef = useRef({});
+  const studioIdsKeyRef = useRef('');
+  const lastCompactDotsRef = useRef(null);
+  const lastCenteredIdRef = useRef(null);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -79,7 +82,7 @@ export function GymMap({
   // Fit bounds when filter changes
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || studios.length === 0) return;
+    if (!map || fitBoundsTrigger === 0 || studios.length === 0) return;
     const bounds = studios
       .filter((s) => typeof s.lat === 'number' && typeof s.lng === 'number')
       .map((s) => [s.lat, s.lng]);
@@ -91,25 +94,46 @@ export function GymMap({
     }
   }, [fitBoundsTrigger]);
 
-  // Render markers and listen for zoom changes
+  // Render or incrementally update markers and listen for zoom changes
   useEffect(() => {
     const map = mapRef.current;
     const layer = markersLayerRef.current;
     if (!map || !layer) return;
 
-    const drawMarkers = () => {
-      layer.clearLayers();
-      markerByIdRef.current = {};
-      const currentZoom = map.getZoom() || 6;
-      const showCompactDots = currentZoom <= 7 && studios.length > 15;
+    const validStudios = studios.filter(
+      (s) => typeof s.lat === 'number' && typeof s.lng === 'number'
+    );
+    const idsKey = validStudios.map((s) => s.id).join(',');
 
-      for (const s of studios) {
-        if (typeof s.lat !== 'number' || typeof s.lng !== 'number') continue;
+    const syncMarkers = () => {
+      const currentZoom = map.getZoom() || 6;
+      const showCompactDots = currentZoom <= 7 && validStudios.length > 15;
+      const structureChanged =
+        idsKey !== studioIdsKeyRef.current || showCompactDots !== lastCompactDotsRef.current;
+
+      if (structureChanged) {
+        layer.clearLayers();
+        markerByIdRef.current = {};
+        studioIdsKeyRef.current = idsKey;
+        lastCompactDotsRef.current = showCompactDots;
+      }
+
+      for (const s of validStudios) {
         const pct = getStudioCurrentPct(s.id, history, liveCache);
         const lvl = getLevelInfo(pct ?? 35);
         const isSelected = s.id === selectedStudioId;
-
         const usePill = isSelected || !showCompactDots;
+
+        const todayPred = buildTodaySeriesAndPredictions(s.id, history, liveCache);
+        const in2hHour = (todayPred.activeHour + 2) % 24;
+        const in2hPct = todayPred.hours[in2hHour]?.percentage ?? '--';
+        const sig = `${pct}|${in2hPct}|${isSelected ? 1 : 0}|${usePill ? 1 : 0}`;
+
+        const existing = markerByIdRef.current[s.id];
+        if (existing && existing._sig === sig) {
+          continue;
+        }
+
         const icon = usePill
           ? L.divIcon({
               className: '',
@@ -124,54 +148,59 @@ export function GymMap({
               iconAnchor: [6, 6],
             });
 
-        const marker = L.marker([s.lat, s.lng], {
-          icon,
-          zIndexOffset: isSelected ? 1000 : 0,
-        });
-
-        const todayPred = buildTodaySeriesAndPredictions(s.id, history, liveCache);
-        const in2hHour = (todayPred.activeHour + 2) % 24;
-        const in2hPct = todayPred.hours[in2hHour]?.percentage ?? '--';
-
-        marker.bindPopup(`
+        const popupHtml = `
           <div style="min-width: 170px;">
             <div style="font-weight: 800; font-size: 0.9rem; margin-bottom: 2px;">${formatStudioName(s.name)}</div>
             <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 6px;">${s.street}, ${s.zipCode} ${s.city}</div>
             <div style="display: flex; gap: 0.65rem; align-items: center; font-size: 0.82rem; font-weight: 700; font-variant-numeric: tabular-nums;">
-              <span style="color: ${pct < 45 ? '#10b981' : pct < 75 ? '#d97706' : '#e11d48'};">${pct !== null ? `${pct}%` : '--%'}</span>
+              <span style="color: ${pct !== null && pct < 45 ? '#10b981' : pct !== null && pct < 75 ? '#d97706' : '#e11d48'};">${pct !== null ? `${pct}%` : '--%'}</span>
               <span style="color: #0284c7;">+2h: ~${in2hPct}%</span>
             </div>
           </div>
-        `);
+        `;
 
-        marker.on('click', () => {
-          onSelectStudio(s.id);
-        });
-
-        marker.addTo(layer);
-        markerByIdRef.current[s.id] = marker;
+        if (existing) {
+          existing.setIcon(icon);
+          existing.setZIndexOffset(isSelected ? 1000 : 0);
+          existing.setPopupContent(popupHtml);
+          existing._sig = sig;
+        } else {
+          const marker = L.marker([s.lat, s.lng], {
+            icon,
+            zIndexOffset: isSelected ? 1000 : 0,
+          });
+          marker._sig = sig;
+          marker.bindPopup(popupHtml);
+          marker.on('click', () => {
+            onSelectStudio(s.id);
+          });
+          marker.addTo(layer);
+          markerByIdRef.current[s.id] = marker;
+        }
       }
     };
 
-    drawMarkers();
-    map.on('zoomend', drawMarkers);
+    syncMarkers();
+    map.on('zoomend', syncMarkers);
     return () => {
-      map.off('zoomend', drawMarkers);
+      map.off('zoomend', syncMarkers);
     };
   }, [studios, selectedStudioId, history, liveCache, onSelectStudio]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selectedStudioId) return;
+    if (!map || !selectedStudioId || studios.length === 0) return;
+    if (lastCenteredIdRef.current === selectedStudioId) return;
     const studio = studios.find((s) => s.id === selectedStudioId);
     if (studio && typeof studio.lat === 'number' && typeof studio.lng === 'number') {
+      lastCenteredIdRef.current = selectedStudioId;
       map.setView([studio.lat, studio.lng], Math.max(map.getZoom() || 6, 12), {
         animate: true,
       });
       const marker = markerByIdRef.current[selectedStudioId];
       if (marker) marker.openPopup();
     }
-  }, [selectedStudioId]);
+  }, [selectedStudioId, studios]);
 
   return (
     <div className="relative h-[300px] w-full overflow-hidden rounded-lg border border-border bg-secondary sm:h-[460px]">

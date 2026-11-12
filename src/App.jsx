@@ -130,6 +130,29 @@ function buildSmoothVerticalCurvePath(values, width = 300, height = 1800) {
   return d;
 }
 
+async function fetchStudioUtilization(studioId, signal) {
+  try {
+    const res = await fetch(
+      `https://rsg-group.api.magicline.com/connect/v1/studio/${studioId}/utilization`,
+      { signal }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!Array.isArray(data?.items)) return null;
+    const currentIdx = data.items.findIndex((i) => i.isCurrent === true);
+    const currentPct =
+      currentIdx >= 0 ? data.items[currentIdx].percentage : data.items[0]?.percentage ?? null;
+    return {
+      items: data.items,
+      currentHour: currentIdx >= 0 ? currentIdx : getBerlinNow().hour,
+      currentPct,
+      fetchedAt: Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('mcfit_theme_override');
@@ -194,28 +217,27 @@ export default function App() {
   };
 
   const fetchLiveStudio = useCallback(async (studioId) => {
-    try {
-      const res = await fetch(
-        `https://rsg-group.api.magicline.com/connect/v1/studio/${studioId}/utilization`
+    const entry = await fetchStudioUtilization(studioId);
+    if (!entry) return;
+    setLiveCache((prev) => ({ ...prev, [studioId]: entry }));
+  }, []);
+
+  const fetchLiveBatch = useCallback(async (studioIds, signal) => {
+    const BATCH_SIZE = 15;
+    for (let i = 0; i < studioIds.length; i += BATCH_SIZE) {
+      if (signal?.aborted) return;
+      const chunk = studioIds.slice(i, i + BATCH_SIZE);
+      const results = await Promise.all(
+        chunk.map(async (id) => [id, await fetchStudioUtilization(id, signal)])
       );
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data?.items)) {
-        const currentIdx = data.items.findIndex((i) => i.isCurrent === true);
-        const currentPct =
-          currentIdx >= 0 ? data.items[currentIdx].percentage : data.items[0]?.percentage ?? null;
-        setLiveCache((prev) => ({
-          ...prev,
-          [studioId]: {
-            items: data.items,
-            currentHour: currentIdx >= 0 ? currentIdx : getBerlinNow().hour,
-            currentPct,
-            fetchedAt: new Date(),
-          },
-        }));
+      if (signal?.aborted) return;
+      const updates = {};
+      for (const [id, entry] of results) {
+        if (entry) updates[id] = entry;
       }
-    } catch {
-      // Fallback to snapshot
+      if (Object.keys(updates).length > 0) {
+        setLiveCache((prev) => ({ ...prev, ...updates }));
+      }
     }
   }, []);
 
@@ -251,9 +273,24 @@ export default function App() {
     };
   }, []);
 
+  // Fetch live capacity for ALL studios in polite batches on initial load so the map & list are live immediately
+  useEffect(() => {
+    if (studios.length === 0) return;
+    const controller = new AbortController();
+    const prioritizedIds = [
+      ...(selectedStudioId ? [selectedStudioId] : []),
+      ...studios.map((s) => s.id).filter((id) => id !== selectedStudioId),
+    ];
+    fetchLiveBatch(prioritizedIds, controller.signal);
+    return () => controller.abort();
+  }, [studios, fetchLiveBatch]);
+
   useEffect(() => {
     if (selectedStudioId) {
-      fetchLiveStudio(selectedStudioId);
+      const cached = liveCache[selectedStudioId];
+      if (!cached || Date.now() - cached.fetchedAt > 60_000) {
+        fetchLiveStudio(selectedStudioId);
+      }
     }
   }, [selectedStudioId, fetchLiveStudio]);
 
@@ -302,15 +339,6 @@ export default function App() {
     return list;
   }, [studios, selectedCity, searchQuery, sortBy, history, liveCache]);
 
-  useEffect(() => {
-    if (filteredStudios.length === 0 || filteredStudios.length > 25) return;
-    filteredStudios.forEach((s) => {
-      if (!liveCache[s.id]) {
-        fetchLiveStudio(s.id);
-      }
-    });
-  }, [filteredStudios, liveCache, fetchLiveStudio]);
-
   const activeStudio = useMemo(
     () => studios.find((s) => s.id === selectedStudioId) || studios[0] || null,
     [studios, selectedStudioId]
@@ -352,6 +380,10 @@ export default function App() {
   const handleRefresh = async () => {
     if (!activeStudio) return;
     await fetchLiveStudio(activeStudio.id);
+    const otherIds = studios.map((s) => s.id).filter((id) => id !== activeStudio.id);
+    if (otherIds.length > 0) {
+      fetchLiveBatch(otherIds);
+    }
   };
 
   if (!activeStudio || !todayModel) {
