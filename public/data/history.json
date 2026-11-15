@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-11-14T23:12:19.984Z",
+  "lastUpdated": "2026-11-15T01:18:59.565Z",
   "studios": {
     "1210249500": {
       "name": "McFIT Hannover-Wülfel",
@@ -162,9 +162,9 @@
           null
         ],
         "2026-11-15": [
+          0,
+          1,
           2,
-          null,
-          null,
           null,
           null,
           null,
@@ -350,9 +350,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -538,9 +538,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          1,
+          3,
+          1,
           null,
           null,
           null,
@@ -726,9 +726,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -1102,9 +1102,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          0,
+          2,
+          3,
           null,
           null,
           null,
@@ -1290,9 +1290,9 @@
           null
         ],
         "2026-11-15": [
-          16,
-          null,
-          null,
+          2,
+          4,
+          3,
           null,
           null,
           null,
@@ -1478,9 +1478,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -1666,9 +1666,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -1854,9 +1854,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          1,
+          1,
+          0,
           null,
           null,
           null,
@@ -2042,9 +2042,9 @@
           null
         ],
         "2026-11-15": [
-          8,
-          null,
-          null,
+          0,
+          1,
+          2,
           null,
           null,
           null,
@@ -2230,9 +2230,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -2418,9 +2418,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          1,
+          2,
           null,
           null,
           null,
@@ -2606,9 +2606,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          1,
+          1,
+          1,
           null,
           null,
           null,
@@ -2794,9 +2794,9 @@
           null
         ],
         "2026-11-15": [
-          21,
-          null,
-          null,
+          0,
+          0,
+          9,
           null,
           null,
           null,
@@ -2983,8 +2983,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -3170,9 +3170,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -3358,9 +3358,9 @@
           null
         ],
         "2026-11-15": [
+          0,
           1,
-          null,
-          null,
+          1,
           null,
           null,
           null,
@@ -3546,9 +3546,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -3734,9 +3734,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          1,
+          3,
+          2,
           null,
           null,
           null,
@@ -3922,9 +3922,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          0,
+          0,
+          2,
           null,
           null,
           null,
@@ -4110,9 +4110,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -4298,9 +4298,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          1,
+          1,
+          2,
           null,
           null,
           null,
@@ -4486,9 +4486,9 @@
           null
         ],
         "2026-11-15": [
-          1,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -4674,9 +4674,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -4862,9 +4862,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -5050,9 +5050,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -5238,9 +5238,9 @@
           null
         ],
         "2026-11-15": [
-          9,
-          null,
-          null,
+          0,
+          0,
+          3,
           null,
           null,
           null,
@@ -5427,8 +5427,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          1,
           null,
           null,
           null,
@@ -5614,9 +5614,9 @@
           null
         ],
         "2026-11-15": [
-          8,
-          null,
-          null,
+          0,
+          4,
+          0,
           null,
           null,
           null,
@@ -5802,9 +5802,9 @@
           null
         ],
         "2026-11-15": [
-          1,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -5991,8 +5991,8 @@
         ],
         "2026-11-15": [
           2,
-          null,
-          null,
+          5,
+          4,
           null,
           null,
           null,
@@ -6178,9 +6178,9 @@
           null
         ],
         "2026-11-15": [
+          0,
           1,
-          null,
-          null,
+          0,
           null,
           null,
           null,
@@ -6366,9 +6366,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -6554,9 +6554,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -6742,9 +6742,9 @@
           null
         ],
         "2026-11-15": [
+          0,
+          0,
           2,
-          null,
-          null,
           null,
           null,
           null,
@@ -6930,9 +6930,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          0,
+          1,
+          3,
           null,
           null,
           null,
@@ -7118,9 +7118,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -7306,9 +7306,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -7495,9 +7495,9 @@
           null
         ],
         "2026-11-15": [
-          17,
-          null,
-          null,
+          4,
+          5,
+          6,
           null,
           null,
           null,
@@ -7684,9 +7684,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -7873,9 +7873,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          0,
+          1,
+          2,
           null,
           null,
           null,
@@ -8062,9 +8062,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -8250,9 +8250,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -8439,9 +8439,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -8628,9 +8628,9 @@
           null
         ],
         "2026-11-15": [
-          17,
-          null,
-          null,
+          1,
+          3,
+          5,
           null,
           null,
           null,
@@ -8817,9 +8817,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          1,
+          1,
+          0,
           null,
           null,
           null,
@@ -9195,9 +9195,9 @@
           null
         ],
         "2026-11-15": [
-          20,
-          null,
-          null,
+          1,
+          5,
+          7,
           null,
           null,
           null,
@@ -9384,9 +9384,9 @@
           null
         ],
         "2026-11-15": [
-          11,
-          null,
-          null,
+          1,
+          4,
+          6,
           null,
           null,
           null,
@@ -9573,9 +9573,9 @@
           null
         ],
         "2026-11-15": [
-          8,
-          null,
-          null,
+          1,
+          3,
+          2,
           null,
           null,
           null,
@@ -9762,9 +9762,9 @@
           null
         ],
         "2026-11-15": [
-          10,
-          null,
-          null,
+          2,
+          3,
+          1,
           null,
           null,
           null,
@@ -9952,8 +9952,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -10140,9 +10140,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          1,
+          2,
+          2,
           null,
           null,
           null,
@@ -10329,9 +10329,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          1,
+          1,
+          0,
           null,
           null,
           null,
@@ -10518,9 +10518,9 @@
           null
         ],
         "2026-11-15": [
+          0,
+          0,
           2,
-          null,
-          null,
           null,
           null,
           null,
@@ -10706,9 +10706,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          1,
+          4,
+          4,
           null,
           null,
           null,
@@ -10894,9 +10894,9 @@
           null
         ],
         "2026-11-15": [
-          13,
-          null,
-          null,
+          0,
+          2,
+          4,
           null,
           null,
           null,
@@ -11082,9 +11082,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          1,
+          1,
+          2,
           null,
           null,
           null,
@@ -11270,9 +11270,9 @@
           null
         ],
         "2026-11-15": [
-          7,
-          null,
-          null,
+          0,
+          2,
+          1,
           null,
           null,
           null,
@@ -11458,9 +11458,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -11646,9 +11646,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -11834,9 +11834,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -12022,9 +12022,9 @@
           null
         ],
         "2026-11-15": [
-          1,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -12210,9 +12210,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -12398,9 +12398,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -12586,9 +12586,9 @@
           null
         ],
         "2026-11-15": [
-          9,
-          null,
-          null,
+          0,
+          3,
+          4,
           null,
           null,
           null,
@@ -12774,9 +12774,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          2,
+          2,
           null,
           null,
           null,
@@ -12962,9 +12962,9 @@
           null
         ],
         "2026-11-15": [
-          1,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -13150,9 +13150,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -13338,9 +13338,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -13526,9 +13526,9 @@
           null
         ],
         "2026-11-15": [
-          26,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -13715,8 +13715,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -13902,9 +13902,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -14090,9 +14090,9 @@
           null
         ],
         "2026-11-15": [
-          1,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -14279,8 +14279,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -14466,9 +14466,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          1,
+          0,
           null,
           null,
           null,
@@ -14654,9 +14654,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          1,
+          0,
           null,
           null,
           null,
@@ -14842,9 +14842,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -15030,9 +15030,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          2,
+          6,
+          6,
           null,
           null,
           null,
@@ -15218,9 +15218,9 @@
           null
         ],
         "2026-11-15": [
+          0,
+          0,
           2,
-          null,
-          null,
           null,
           null,
           null,
@@ -15406,9 +15406,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -15594,9 +15594,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          1,
+          2,
           null,
           null,
           null,
@@ -15783,8 +15783,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -15970,9 +15970,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -16158,9 +16158,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -16346,9 +16346,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          1,
+          0,
+          0,
           null,
           null,
           null,
@@ -16534,9 +16534,9 @@
           null
         ],
         "2026-11-15": [
-          10,
-          null,
-          null,
+          2,
+          3,
+          1,
           null,
           null,
           null,
@@ -16723,8 +16723,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -16910,9 +16910,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -17098,9 +17098,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -17287,8 +17287,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -17662,9 +17662,9 @@
           null
         ],
         "2026-11-15": [
-          11,
-          null,
-          null,
+          4,
+          7,
+          6,
           null,
           null,
           null,
@@ -17850,9 +17850,9 @@
           null
         ],
         "2026-11-15": [
-          24,
-          null,
-          null,
+          1,
+          1,
+          18,
           null,
           null,
           null,
@@ -18038,9 +18038,9 @@
           null
         ],
         "2026-11-15": [
-          33,
-          null,
-          null,
+          4,
+          5,
+          13,
           null,
           null,
           null,
@@ -18226,9 +18226,9 @@
           null
         ],
         "2026-11-15": [
-          9,
-          null,
-          null,
+          0,
+          1,
+          2,
           null,
           null,
           null,
@@ -18414,9 +18414,9 @@
           null
         ],
         "2026-11-15": [
-          46,
-          null,
-          null,
+          1,
+          3,
+          39,
           null,
           null,
           null,
@@ -18602,9 +18602,9 @@
           null
         ],
         "2026-11-15": [
-          10,
-          null,
-          null,
+          4,
+          6,
+          1,
           null,
           null,
           null,
@@ -18790,9 +18790,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          1,
+          2,
+          1,
           null,
           null,
           null,
@@ -18978,9 +18978,9 @@
           null
         ],
         "2026-11-15": [
-          12,
-          null,
-          null,
+          0,
+          3,
+          8,
           null,
           null,
           null,
@@ -19166,9 +19166,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -19354,9 +19354,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -19542,9 +19542,9 @@
           null
         ],
         "2026-11-15": [
-          15,
-          null,
-          null,
+          1,
+          3,
+          2,
           null,
           null,
           null,
@@ -19730,9 +19730,9 @@
           null
         ],
         "2026-11-15": [
-          12,
-          null,
-          null,
+          0,
+          1,
+          4,
           null,
           null,
           null,
@@ -19918,9 +19918,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -20106,9 +20106,9 @@
           null
         ],
         "2026-11-15": [
-          8,
-          null,
-          null,
+          1,
+          2,
+          0,
           null,
           null,
           null,
@@ -20294,9 +20294,9 @@
           null
         ],
         "2026-11-15": [
-          14,
-          null,
-          null,
+          1,
+          2,
+          4,
           null,
           null,
           null,
@@ -20482,9 +20482,9 @@
           null
         ],
         "2026-11-15": [
-          3,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -20671,8 +20671,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -20858,9 +20858,9 @@
           null
         ],
         "2026-11-15": [
-          1,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -21046,9 +21046,9 @@
           null
         ],
         "2026-11-15": [
+          0,
+          1,
           2,
-          null,
-          null,
           null,
           null,
           null,
@@ -21234,9 +21234,9 @@
           null
         ],
         "2026-11-15": [
-          21,
-          null,
-          null,
+          1,
+          2,
+          6,
           null,
           null,
           null,
@@ -21423,8 +21423,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -21610,9 +21610,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -21798,9 +21798,9 @@
           null
         ],
         "2026-11-15": [
-          13,
-          null,
-          null,
+          1,
+          2,
+          6,
           null,
           null,
           null,
@@ -21986,9 +21986,9 @@
           null
         ],
         "2026-11-15": [
-          1,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -22175,8 +22175,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -22362,9 +22362,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -22550,9 +22550,9 @@
           null
         ],
         "2026-11-15": [
-          14,
-          null,
-          null,
+          1,
+          2,
+          4,
           null,
           null,
           null,
@@ -22738,9 +22738,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -22926,9 +22926,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -23114,9 +23114,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -23302,9 +23302,9 @@
           null
         ],
         "2026-11-15": [
-          22,
-          null,
-          null,
+          0,
+          2,
+          5,
           null,
           null,
           null,
@@ -23490,9 +23490,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -23678,9 +23678,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          0,
+          0,
+          2,
           null,
           null,
           null,
@@ -23866,9 +23866,9 @@
           null
         ],
         "2026-11-15": [
-          6,
-          null,
-          null,
+          0,
+          2,
+          3,
           null,
           null,
           null,
@@ -24054,9 +24054,9 @@
           null
         ],
         "2026-11-15": [
-          8,
-          null,
-          null,
+          0,
+          1,
+          2,
           null,
           null,
           null,
@@ -24242,9 +24242,9 @@
           null
         ],
         "2026-11-15": [
-          18,
-          null,
-          null,
+          0,
+          1,
+          5,
           null,
           null,
           null,
@@ -24430,9 +24430,9 @@
           null
         ],
         "2026-11-15": [
-          1,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -24618,9 +24618,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          1,
+          1,
+          1,
           null,
           null,
           null,
@@ -24806,9 +24806,9 @@
           null
         ],
         "2026-11-15": [
-          28,
-          null,
-          null,
+          0,
+          2,
+          7,
           null,
           null,
           null,
@@ -24994,9 +24994,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          0,
+          1,
+          1,
           null,
           null,
           null,
@@ -25182,9 +25182,9 @@
           null
         ],
         "2026-11-15": [
-          24,
-          null,
-          null,
+          2,
+          6,
+          10,
           null,
           null,
           null,
@@ -25370,9 +25370,9 @@
           null
         ],
         "2026-11-15": [
-          17,
-          null,
-          null,
+          1,
+          3,
+          7,
           null,
           null,
           null,
@@ -25558,9 +25558,9 @@
           null
         ],
         "2026-11-15": [
-          9,
-          null,
-          null,
+          0,
+          4,
+          7,
           null,
           null,
           null,
@@ -25746,9 +25746,9 @@
           null
         ],
         "2026-11-15": [
-          8,
-          null,
-          null,
+          0,
+          1,
+          2,
           null,
           null,
           null,
@@ -25934,9 +25934,9 @@
           null
         ],
         "2026-11-15": [
-          31,
-          null,
-          null,
+          0,
+          1,
+          10,
           null,
           null,
           null,
@@ -26122,9 +26122,9 @@
           null
         ],
         "2026-11-15": [
-          22,
-          null,
-          null,
+          0,
+          0,
+          11,
           null,
           null,
           null,
@@ -26310,9 +26310,9 @@
           null
         ],
         "2026-11-15": [
-          8,
-          null,
-          null,
+          0,
+          1,
+          3,
           null,
           null,
           null,
@@ -26498,9 +26498,9 @@
           null
         ],
         "2026-11-15": [
-          24,
-          null,
-          null,
+          1,
+          2,
+          8,
           null,
           null,
           null,
@@ -26686,9 +26686,9 @@
           null
         ],
         "2026-11-15": [
+          0,
           1,
-          null,
-          null,
+          1,
           null,
           null,
           null,
@@ -26874,9 +26874,9 @@
           null
         ],
         "2026-11-15": [
-          10,
-          null,
-          null,
+          0,
+          1,
+          3,
           null,
           null,
           null,
@@ -27062,9 +27062,9 @@
           null
         ],
         "2026-11-15": [
-          10,
-          null,
-          null,
+          0,
+          2,
+          2,
           null,
           null,
           null,
@@ -27250,9 +27250,9 @@
           null
         ],
         "2026-11-15": [
-          15,
-          null,
-          null,
+          0,
+          2,
+          5,
           null,
           null,
           null,
@@ -27438,9 +27438,9 @@
           null
         ],
         "2026-11-15": [
-          7,
-          null,
-          null,
+          0,
+          0,
+          2,
           null,
           null,
           null,
@@ -27626,9 +27626,9 @@
           null
         ],
         "2026-11-15": [
-          29,
-          null,
-          null,
+          1,
+          2,
+          10,
           null,
           null,
           null,
@@ -27814,9 +27814,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          0,
+          2,
+          2,
           null,
           null,
           null,
@@ -28002,9 +28002,9 @@
           null
         ],
         "2026-11-15": [
-          7,
-          null,
-          null,
+          1,
+          2,
+          2,
           null,
           null,
           null,
@@ -28190,9 +28190,9 @@
           null
         ],
         "2026-11-15": [
-          7,
-          null,
-          null,
+          1,
+          1,
+          0,
           null,
           null,
           null,
@@ -28379,9 +28379,9 @@
           null
         ],
         "2026-11-15": [
-          9,
-          null,
-          null,
+          1,
+          2,
+          1,
           null,
           null,
           null,
@@ -28568,9 +28568,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          1,
+          3,
+          3,
           null,
           null,
           null,
@@ -28756,9 +28756,9 @@
           null
         ],
         "2026-11-15": [
-          9,
-          null,
-          null,
+          0,
+          3,
+          3,
           null,
           null,
           null,
@@ -28945,9 +28945,9 @@
           null
         ],
         "2026-11-15": [
-          13,
-          null,
-          null,
+          1,
+          2,
+          1,
           null,
           null,
           null,
@@ -29134,9 +29134,9 @@
           null
         ],
         "2026-11-15": [
-          1,
-          null,
-          null,
+          0,
+          0,
+          0,
           null,
           null,
           null,
@@ -29323,8 +29323,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -29510,9 +29510,9 @@
           null
         ],
         "2026-11-15": [
-          2,
-          null,
-          null,
+          0,
+          0,
+          1,
           null,
           null,
           null,
@@ -29698,9 +29698,9 @@
           null
         ],
         "2026-11-15": [
-          9,
-          null,
-          null,
+          1,
+          3,
+          3,
           null,
           null,
           null,
@@ -29887,8 +29887,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -31579,9 +31579,9 @@
           null
         ],
         "2026-11-15": [
-          4,
-          null,
-          null,
+          0,
+          2,
+          2,
           null,
           null,
           null,
@@ -31767,9 +31767,9 @@
           null
         ],
         "2026-11-15": [
-          31,
-          null,
-          null,
+          4,
+          7,
+          12,
           null,
           null,
           null,
@@ -32145,8 +32145,8 @@
         ],
         "2026-11-15": [
           0,
-          null,
-          null,
+          0,
+          0,
           null,
           null,
           null,
@@ -32333,9 +32333,9 @@
           null
         ],
         "2026-11-15": [
-          20,
-          null,
-          null,
+          4,
+          7,
+          5,
           null,
           null,
           null,
@@ -32522,9 +32522,9 @@
           null
         ],
         "2026-11-15": [
-          5,
-          null,
-          null,
+          0,
+          1,
+          3,
           null,
           null,
           null,
@@ -32711,9 +32711,9 @@
           null
         ],
         "2026-11-15": [
-          15,
-          null,
-          null,
+          0,
+          1,
+          3,
           null,
           null,
           null,
@@ -32899,9 +32899,9 @@
           null
         ],
         "2026-11-15": [
-          39,
-          null,
-          null,
+          1,
+          2,
+          14,
           null,
           null,
           null,
