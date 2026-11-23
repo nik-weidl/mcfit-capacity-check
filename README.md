@@ -4,7 +4,7 @@ A web application and automated GitHub Actions collector built with **React, Vit
 
 Unlike the official McFIT app graph (which only shows today's past hours and returns `0%` for future hours and other days), this app combines:
 1. **Live Real-Time Utilization** fetched directly from Magicline's public CORS-enabled studio API (`https://rsg-group.api.magicline.com/connect/v1/studio/{studioId}/utilization`).
-2. **Automated Daily History Snapshots** (`public/data/history.json`) collected via GitHub Actions twice a day (retaining up to 90 days per studio).
+2. **Automated Daily History Snapshots** (`public/data/history.json`) collected via GitHub Actions once daily late at night (`23:40 CET`, retaining up to 90 days per studio).
 3. **Smart "In X Hours" & Day-of-Week Predictions** that blend historical weekday curves with today's live occupancy trend.
 
 ## How Predictions Work

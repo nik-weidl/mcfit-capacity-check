@@ -2,13 +2,9 @@ name: Collect McFIT Germany Capacity (All 175 Studios)
 
 on:
   schedule:
-    # Runs 3 times daily:
-    # 1) 14:45 UTC (15:45 CET / 16:45 CEST) - Afternoon checkpoint
-    # 2) 19:30 UTC (20:30 CET / 21:30 CEST) - Evening peak checkpoint
-    # 3) 21:45 UTC (22:45 CET / 23:45 CEST) - Late-night snapshot before McFIT resets at midnight
-    - cron: '45 14 * * *'
-    - cron: '30 19 * * *'
-    - cron: '45 21 * * *'
+    # Runs once daily as late as possible before McFIT resets at midnight Berlin time:
+    # 22:40 UTC (23:40 CET) - Captures all 24 hourly slots (00:00–23:00) in a single run
+    - cron: '40 22 * * *'
   workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
 
 permissions:
